@@ -387,129 +387,201 @@ const mrtLinesTaipei = {
         }
 
         async function startSearch() {
-            const loader = document.getElementById('loader');
-            const btn = document.getElementById('search-btn');
-            loader.style.display = 'flex';
-            btn.disabled = true;
+    const loader = document.getElementById('loader');
+    const btn = document.getElementById('search-btn');
+    const apiKey = getStoredKey();
+    
+    loader.style.display = 'flex';
+    btn.disabled = true;
 
-            const config = {
-                apiKey: getStoredKey(),
-                city: document.getElementById('city').options[document.getElementById('city').selectedIndex].text,
-                district: document.getElementById('district').value,
-                food: document.getElementById('food').options[document.getElementById('food').selectedIndex].text,
-                budget: document.getElementById('budget').options[document.getElementById('budget').selectedIndex].text,
-                purpose: document.getElementById('purpose').value,
-                transport: document.getElementById('transport').value,
-                station: document.getElementById('mrt-station').value,
-                isHidden: document.getElementById('btn-hidden').classList.contains('selected'),
-                isOpenOnly: document.getElementById('btn-open').classList.contains('selected')
-            };
+    // 收集使用者需求
+    const config = {
+        food: document.getElementById('food').options[document.getElementById('food').selectedIndex].text,
+        budget: document.getElementById('budget').value, // low, mid, high, luxury
+        purpose: document.getElementById('purpose').value,
+        city: document.getElementById('city').options[document.getElementById('city').selectedIndex].text,
+        district: document.getElementById('district').value,
+        station: document.getElementById('mrt-station').value,
+        transport: document.getElementById('transport').value,
+        isHidden: document.getElementById('btn-hidden').classList.contains('selected'),
+        isOpenOnly: document.getElementById('btn-open').classList.contains('selected')
+    };
 
-            if (isNearbyMode) {
-                config.locationLimit = `GPS座標 (${userCoords.lat}, ${userCoords.lng}) 半徑 1公里內`;
-            } else if (config.transport !== 'none' && config.station) {
-                config.locationLimit = `${config.city}${config.station} 站步行 800 公尺內`;
-            } else {
-                config.locationLimit = `${config.city}${config.district} 區域`;
-            }
-
-            try {
-                const res = await getAiRecommendation(config);
-                if(res.error) { 
-                    alert(res.error); 
-                } else if(res.data && res.data.length > 0) {
-                    incrementUsage();
-                    keptRestaurants = []; 
-                    isFinalOne = false;
-                    renderCards(res.data);
-                }
-            } catch(e) { 
-                alert("系統連線不穩定，請稍後重試。"); 
-            } finally {
-                loader.style.display = 'none'; 
-                btn.disabled = false;
-            }
+    try {
+        // --- 第一階段：向 Google Places API 抓取真實名單 ---
+        const rawPlaces = await fetchRealPlaces(apiKey, config);
+        
+        if (!rawPlaces || rawPlaces.length === 0) {
+            throw new Error("在該區域找不到符合條件的真實餐廳，請擴大範圍。");
         }
 
-        async function getAiRecommendation(cfg) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${cfg.apiKey}`;
+        // --- 第二階段：將真實名單交給 Gemini 進行推薦與文案包裝 ---
+        const finalRecommendations = await getAiRanking(apiKey, config, rawPlaces);
 
-            const prompt = `你現在是美食數據專家。請檢索位於【${cfg.locationLimit}】、符合「${cfg.food}」類別、預算「${cfg.budget}」的店家。
-            【數據正確性要求】：
-            1. 官方店名：name 必須與 Google Maps 標題 100% 一致。禁止自行增刪分店識別字。
-            2. 數量要求：找齊 6 家真實存在的店。
-            3. 地理邊界：店家必須在 ${cfg.locationLimit} 實際物理 1 公里內，嚴禁 2 公里外的偏移。
-            4. 評分數據：請提供真實評分(rating)與【評論總數(review_count)】。
-            5. 營業時間 (opening_hours)：提供真實營業時段。
-            6. 真實評論摘要 (review_summary)：擷取 Google Maps 真實顧客的反饋。
-            
-            【過濾條件】：
-            ${cfg.isHidden ? "- 優先挑選高分但評論數較少、或是巷弄內的私房名單。" : "- 挑選熱門名店。"}
-            ${cfg.isOpenOnly ? "- 僅限目前營業中的店家。" : ""}
-            
-            【輸出規範】：僅輸出純 JSON 陣列。欄位：name, rating, review_count, price, signature, opening_hours, review_summary, reason, map_query。不要解釋文字。`;
-
-            try {
-                const response = await fetch(url, { 
-                    method: "POST", 
-                    headers: { "Content-Type": "application/json" }, 
-                    body: JSON.stringify({ 
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { response_mime_type: "application/json", temperature: 0.2 }
-                    }) 
-                });
-                const result = await response.json();
-                if (result.error) return { error: `API 請求失敗: ${result.error.message}` };
-                return { data: JSON.parse(result.candidates[0].content.parts[0].text) };
-            } catch (e) { return { error: "資料不穩定，請再試一次。" }; }
+        if (finalRecommendations && finalRecommendations.length > 0) {
+            incrementUsage();
+            keptRestaurants = []; 
+            isFinalOne = false;
+            renderCards(finalRecommendations);
         }
+    } catch (e) {
+        alert(e.message || "探索失敗，請檢查 API Key 權限或網路連線。");
+        console.error(e);
+    } finally {
+        loader.style.display = 'none'; 
+        btn.disabled = false;
+    }
+}
+
+    async function fetchRealPlaces(apiKey, cfg) {
+    let query = `${cfg.city} ${cfg.district} ${cfg.food}`;
+    if (cfg.transport !== 'none' && cfg.station) query = `${cfg.station}附近 ${cfg.food}`;
+    if (isNearbyMode && userCoords.lat) query = `${cfg.food}`;
+
+    const url = 'https://places.googleapis.com/v1/places:searchText';
+    const requestBody = {
+        textQuery: query,
+        maxResultCount: 12,
+        languageCode: "zh-TW",
+        regionCode: "TW"
+    };
+
+    if (isNearbyMode && userCoords.lat) {
+        requestBody.locationBias = {
+            circle: {
+                center: { latitude: userCoords.lat, longitude: userCoords.lng },
+                radius: 1500.0
+            }
+        };
+    }
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': apiKey,
+            // 關鍵：加入 photos 與 formattedAddress 欄位
+            'X-Goog-FieldMask': 'places.displayName,places.rating,places.userRatingCount,places.priceLevel,places.id,places.location,places.formattedAddress,places.photos'
+        },
+        body: JSON.stringify(requestBody)
+    });
+
+    const result = await response.json();
+    return result.places || [];
+}
+    
+        async function getAiRanking(apiKey, cfg, rawPlaces) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+    const simplifiedList = rawPlaces.map(p => ({
+        name: p.displayName.text,
+        rating: p.rating,
+        reviews: p.userRatingCount,
+        price_level: p.priceLevel,
+        address: p.formattedAddress,
+        place_id: p.id,
+        // 取第一張照片的名稱
+        photo_name: p.photos && p.photos.length > 0 ? p.photos[0].name : null,
+        lat: p.location.latitude,
+        lng: p.location.longitude
+    }));
+
+    const prompt = `你現在是美食家。從以下 Google 真實名單選出最符合「${cfg.food}」與「${cfg.purpose}」的 6 家店。
+    名單數據：${JSON.stringify(simplifiedList)}
+    
+    使用者座標：lat ${userCoords.lat || '未知'}, lng ${userCoords.lng || '未知'}
+
+    【要求】：
+    1. 計算距離並輸出為 "350m" 或 "1.2km" 格式。
+    2. 保留原有的 photo_name 與 address。
+    3. 推薦原因要專業。
+
+    【輸出 JSON】：[ {name, rating, review_count, price, signature, opening_hours, review_summary, reason, place_id, distance, address, photo_name} ]`;
+
+    const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { response_mime_type: "application/json", temperature: 0.2 }
+        })
+    });
+
+    const result = await response.json();
+    const recommendations = JSON.parse(result.candidates[0].content.parts[0].text);
+    
+    return recommendations.map(res => {
+        // 構造 Google Places 照片真實網址
+        const photoUrl = res.photo_name 
+            ? `https://places.googleapis.com/v1/${res.photo_name}/media?key=${apiKey}&maxHeightPx=400`
+            : `https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400`; // 備用圖
+
+        return {
+            ...res,
+            photo_url: photoUrl,
+            map_query: `https://www.google.com/maps/search/?api=1&query_place_id=${res.place_id}`
+        };
+    });
+}
+
+    
         function renderCards(restaurants) {
-            document.getElementById('main-ui').classList.add('blur-mode');
-            const stack = document.getElementById('card-stack'); 
-            stack.innerHTML = ''; 
-            document.getElementById('swiper-overlay').style.display = 'flex';
+    document.getElementById('main-ui').classList.add('blur-mode');
+    const stack = document.getElementById('card-stack'); 
+    stack.innerHTML = ''; 
+    document.getElementById('swiper-overlay').style.display = 'flex';
+    
+    isFinalOne = (restaurants.length === 1);
+
+    restaurants.forEach((res) => {
+        const wrapper = document.createElement('div'); 
+        wrapper.className = 'swipe-card-wrapper';
+        const card = document.createElement('div'); 
+        card.className = 'swipe-card';
+        
+        card.innerHTML = `
+            <div class="swipe-hints"><div class="hint-item">← NOPE</div><div class="hint-item">LIKE →</div></div>
+            <div class="swipe-label label-like">LIKE</div>
+            <div class="swipe-label label-nope">NOPE</div>
+            <div class="label-chosen">🏆 最終首選</div>
+
+            <!-- 新增：美食照片 -->
+            <div style="width:100%; height:160px; border-radius:14px; overflow:hidden; margin-bottom:12px; background:#333;">
+                <img src="${res.photo_url}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400'">
+            </div>
+
+            <h3 style="margin:0 0 5px 0;">${res.name}</h3>
             
-            isFinalOne = (restaurants.length === 1);
+            <div class="card-badges">
+                <span class="card-badge badge-rating">⭐ ${res.rating} <small>(${res.review_count})</small></span>
+                <!-- 新增：距離標籤 -->
+                <span class="card-badge badge-distance">📍 距離 ${res.distance || '計算中'}</span>
+            </div>
 
-            restaurants.forEach((res) => {
-                const wrapper = document.createElement('div'); 
-                wrapper.className = 'swipe-card-wrapper';
-                const card = document.createElement('div'); 
-                card.className = 'swipe-card';
-                
-                card.innerHTML = `
-                    <div class="swipe-hints">
-                        <div class="hint-item">← NOPE</div>
-                        <div class="hint-item">LIKE →</div>
-                    </div>
-                    <div class="swipe-label label-like">LIKE</div>
-                    <div class="swipe-label label-nope">NOPE</div>
-                    <div class="label-chosen">🏆 最終首選</div>
-                    <h3>${res.name}</h3>
-                    <div class="card-badges">
-                        <span class="card-badge badge-rating">⭐ googl評分 ${res.rating} <small>(${res.review_count} 則評論)</small></span>
-                        <span class="card-badge badge-price">💰 價位 NT$ ${res.price}</span>
-                    </div>
-                    <div class="info-row"><span class="info-label">🔥 必點招牌</span><span>${res.signature}</span></div>
-                    <div class="info-row"><span class="info-label">🕒 營業時間</span><span>${res.opening_hours}</span></div>
-                    <div class="card-summary">"${res.review_summary}"</div>
-                    <div class="info-row" style="margin-top:5px; border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">
-                        <span class="info-label">💡 推薦原因</span><span style="color:var(--accent-yellow)">${res.reason}</span>
-                    </div>
-                    <a class="card-map-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.map_query)}" target="_blank">🗺️ 打開地圖查看詳情</a>
-                `;
-                
-                wrapper.appendChild(card); 
-                stack.insertBefore(wrapper, stack.firstChild); 
-                initSwipe(card, wrapper, res);
-            });
+            <!-- 新增：真實地址 -->
+            <div style="font-size:0.75rem; color:#aaa; margin-bottom:10px;">🏠 ${res.address}</div>
 
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'close-swiper'; 
-            closeBtn.innerText = '← 返回修改'; 
-            closeBtn.onclick = resetUI;
-            stack.appendChild(closeBtn); 
-        }
+            <div class="info-row"><span class="info-label">🔥 必點招牌</span><span>${res.signature}</span></div>
+            <div class="card-summary">"${res.review_summary}"</div>
+            
+            <div class="info-row" style="margin-top:5px; border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">
+                <span class="info-label">💡 推薦原因</span><span style="color:var(--accent-yellow)">${res.reason}</span>
+            </div>
+            
+            <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 打開地圖查看詳情</a>
+        `;
+        
+        wrapper.appendChild(card); 
+        stack.insertBefore(wrapper, stack.firstChild); 
+        initSwipe(card, wrapper, res);
+    });
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'close-swiper'; 
+    closeBtn.innerText = '← 返回修改'; 
+    closeBtn.onclick = resetUI;
+    stack.appendChild(closeBtn); 
+}
 
 
         // --- 核心晉級與蓋章滑動功能 ---
