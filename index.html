@@ -7,6 +7,14 @@
     <link rel="icon" href="favicon.png" type="image/png">
     <link rel="apple-touch-icon" href="favicon.png">
     <style>
+        /* --- 更新後的 API 設定頁面樣式 --- */
+        .api-card h2 { margin-top: 0; color: var(--primary-orange); }
+        .api-instruction { text-align: left; font-size: 0.85rem; color: #bbb; line-height: 1.5; margin-bottom: 20px; }
+        .api-checklist { text-align: left; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px dashed rgba(255,255,255,0.2); }
+        .api-checklist-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.85rem; color: #eee; }
+        .api-checklist-item span { color: var(--accent-yellow); font-weight: bold; }
+        .api-link { color: var(--accent-yellow); text-decoration: none; font-weight: bold; border-bottom: 1px solid; padding-bottom: 2px; }
+        .api-warning { font-size: 0.75rem; color: #ff4444; margin-top: 10px; opacity: 0.8; }
         :root {--primary-orange: #FF6600;--glass-bg: rgba(25, 25, 25, 0.85);--glass-border: rgba(255, 255, 255, 0.15);--input-bg: rgba(255, 255, 255, 0.1);--text-color: #ffffff;--label-color: #cccccc;--accent-yellow: #FFCC00;}
         html, body { overscroll-behavior-y: none; height: 100%; overflow: hidden; position: fixed; width: 100%; margin: 0; padding: 0; background-color: #000; }
         html { font-size: 14px; } 
@@ -75,15 +83,32 @@
 </head>
 <body touch-action="none">
     <div id="api-overlay">
-        <div class="api-card">
-            <h2>🔑 API 設定</h2>
-            <p>請輸入您的 Gemini API Key。<br>設定後享有每日 15 次配額。</p>
-            <input type="password" id="api-key-input" class="api-input" placeholder="貼上您的 API Key (AIza...)">
-            <button class="api-save-btn" onclick="saveApiKey()">確認並儲存</button>
-            <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent-yellow); font-size:0.85rem; display:block; margin-top:15px;">👉 點此申請您的 API Key</a>
-            <button onclick="document.getElementById('api-overlay').style.display='none'" style="background:none; border:none; color:#777; margin-top:20px;">返回首頁</button>
+    <div class="api-card">
+        <h2>🚀 進階混合模式設定</h2>
+        <div class="api-instruction">
+            為了提供 100% 準確的地圖資訊與 AI 推薦，請使用 <b>GCP (Google Cloud Platform)</b> 申請的金鑰，並確保已啟用以下權限：
         </div>
+
+        <div class="api-checklist">
+            <div class="api-checklist-item">✅ <span>Generative Language API</span> (負責 AI 評論)</div>
+            <div class="api-checklist-item">✅ <span>Places API (New)</span> (負責真實地圖數據)</div>
+        </div>
+
+        <input type="password" id="api-key-input" class="api-input" placeholder="貼上您的 GCP API Key (AIza...)">
+        
+        <button class="api-save-btn" onclick="saveApiKey()">儲存設定並啟用</button>
+        
+        <div style="margin-top: 20px;">
+            <a href="https://console.cloud.google.com/" target="_blank" class="api-link">👉 前往 Google Cloud 控制台申請</a>
+        </div>
+
+        <div class="api-warning">
+            *註：GCP 提供每月 $200 美元免費額度，個人使用通常不需付費，但需先於 GCP 綁定信用卡。
+        </div>
+
+        <button onclick="document.getElementById('api-overlay').style.display='none'" style="background:none; border:none; color:#777; margin-top:20px; cursor:pointer;">返回首頁</button>
     </div>
+</div>
 
     <div id="bg-container"></div>
     <div id="loader"><div class="spinner"></div><p style="color:white; margin-top:15px; font-weight:bold;">正在巷弄探索中...</p></div>
@@ -329,7 +354,18 @@ const mrtLinesTaipei = {
         function getUsageCount() { const key = getStoredKey(); if (!key) return 0; const today = new Date().toDateString(); const keyId = "KEY_" + btoa(key).slice(-15); const storedData = JSON.parse(localStorage.getItem('USAGE_' + keyId) || '{}'); return storedData.date === today ? parseInt(storedData.count || 0) : 0; }
         function incrementUsage() { const key = getStoredKey(); const today = new Date().toDateString(); const keyId = "KEY_" + btoa(key).slice(-15); localStorage.setItem('USAGE_' + keyId, JSON.stringify({ date: today, count: getUsageCount() + 1 })); updateUsageDisplay(); }
         function getStoredKey() { return localStorage.getItem('EXPLORER_FINAL_SECURE_KEY') || ""; }
-        function saveApiKey() { const k = document.getElementById('api-key-input').value.trim(); if(k) { localStorage.setItem('EXPLORER_FINAL_SECURE_KEY', k); document.getElementById('api-overlay').style.display='none'; updateUsageDisplay(); } }
+        function saveApiKey() {
+    const k = document.getElementById('api-key-input').value.trim();
+    if(k) {
+        localStorage.setItem('EXPLORER_FINAL_SECURE_KEY', k);
+        document.getElementById('api-overlay').style.display = 'none';
+        
+        // 提示使用者確認權限
+        alert("金鑰已儲存！\n請確保您已在 GCP 後台開啟：\n1. Generative Language API\n2. Places API (New)\n否則搜尋功能將無法正常運作。");
+        
+        updateUsageDisplay();
+    }
+}
         function updateUsageDisplay() { const count = getUsageCount(); document.getElementById('usage-text').innerText = `今日剩餘次數：${DAILY_LIMIT - count} 次`; const btn = document.getElementById('search-btn'); btn.disabled = (count >= DAILY_LIMIT); btn.innerText = (count >= DAILY_LIMIT) ? "今日次數已滿" : "開始探索美食"; }
 
         // --- 核心執行流程 ---
