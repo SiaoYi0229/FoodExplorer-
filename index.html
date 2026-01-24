@@ -254,7 +254,8 @@
     </div>
 </div>
     <div id="bg-container"></div>
-    <!-- 修正：移除重複嵌套，保留主畫面背景 -->
+
+    <!-- 修正：移除重複標籤與孤兒 div -->
     <div id="loader">
         <div class="iris-container">
             <div class="iris-ring"></div>
@@ -524,7 +525,7 @@ const mrtLinesTaipei = {
         function incrementUsage() { const today = new Date().toDateString(); const keyId = btoa(getStoredKey()).slice(-10); const count = getUsageCount() + 1; localStorage.setItem('USAGE_'+keyId, JSON.stringify({date: today, count: count})); updateUsageDisplay(); }
         function updateUsageDisplay() { const count = getUsageCount(); document.getElementById('usage-text').innerText = `今日剩餘次數：${DAILY_LIMIT - count} 次`; }
 
-         // --- 1. 修正後的文字切換邏輯 ---
+         // --- 1. 定義四個階段的文字 (修正註解語法) ---
 function updateLoaderText(stage) {
     const textElem = document.getElementById('loader-text');
     const texts = [
@@ -541,7 +542,6 @@ function updateLoaderText(stage) {
         }, 400);
     }
 }
-
        // --- 2. 修正後的搜尋入口 (修正變數定義順序) ---
 async function handleSearchClick() {
     const apiKey = getStoredKey();
@@ -563,12 +563,17 @@ async function handleSearchClick() {
         isOpenOnly: document.getElementById('btn-open').classList.contains('selected')
     };
 
-    if (!isNearbyMode) {
-        const hasMRT = ['Taipei', 'NewTaipei', 'Taoyuan', 'Taichung', 'Kaohsiung'];
-        const hasHSR = ['Taipei', 'NewTaipei', 'Taoyuan', 'HsinchuCounty', 'Miaoli', 'Taichung', 'Changhua', 'Yunlin', 'ChiayiCounty', 'Tainan', 'Kaohsiung'];
-        if (config.transport === 'mrt' && !hasMRT.includes(config.city)) { alert(`⚠️ ${config.cityName} 目前沒有捷運。`); return; }
-        if (config.transport === 'hsr' && !hasHSR.includes(config.city)) { alert(`⚠️ ${config.cityName} 目前沒有高鐵。`); return; }
-    }
+     if (!isNearbyMode) {
+                const cityKey = document.getElementById('city').value;
+                const cityName = document.getElementById('city').options[document.getElementById('city').selectedIndex].text;
+                const transport = document.getElementById('transport').value;
+                const hasMRT = ['Taipei', 'NewTaipei', 'Taoyuan', 'Taichung', 'Kaohsiung'];
+                const hasHSR = ['Taipei', 'NewTaipei', 'Taoyuan', 'HsinchuCounty', 'Miaoli', 'Taichung', 'Changhua', 'Yunlin', 'ChiayiCounty', 'Tainan', 'Kaohsiung'];
+                const hasAirport = ['Taipei', 'Taoyuan', 'Taichung', 'Tainan', 'Kaohsiung', 'ChiayiCounty', 'Hualien', 'Taitung', 'Penghu', 'Kinmen', 'Lienchiang'];
+                if (transport === 'mrt' && !hasMRT.includes(cityKey)) { alert(`⚠️ ${cityName} 目前沒有捷運。`); return; }
+                if (transport === 'hsr' && !hasHSR.includes(cityKey)) { alert(`⚠️ ${cityName} 目前沒有高鐵。`); return; }
+                if (transport === 'airport' && !hasAirport.includes(cityKey)) { alert(`⚠️ ${cityName} 目前沒有機場。`); return; }
+            }
 
     startSearch(apiKey, config);
 }
@@ -588,27 +593,28 @@ async function handleSearchClick() {
         const rawPlaces = await fetchRealPlaces(apiKey, config);
         
         if (!rawPlaces || rawPlaces.length === 0) {
-            throw new Error("在該區域找不到符合條件的店家，請放寬搜尋條件。");
+            throw new Error("在該區域找不到符合條件的店家，請嘗試放寬搜尋條件。");
         }
 
-        updateLoaderText(stage = 2); 
-        await new Promise(r => setTimeout(r, 600)); // 視覺緩衝
+        updateLoaderText(2); 
+        await new Promise(r => setTimeout(r, 600)); 
         
         updateLoaderText(3);
         const finalRecommendations = await getAiRanking(apiKey, config, rawPlaces);
 
         if (finalRecommendations && finalRecommendations.length > 0) {
             incrementUsage();
-            keptRestaurants = []; isFinalOne = false;
+            keptRestaurants = []; 
+            isFinalOne = false;
             renderCards(finalRecommendations);
         }
-    } } catch (e) {
+    } catch (e) {
         console.error(e);
         let errorMsg = e.message;
         if (errorMsg.includes("Places API")) {
-            errorMsg = "❌ 地圖權限未開啟！\n請點擊右上角⚙️進入設定，點擊教學中的「Places API」連結並按「啟用」。";
+            errorMsg = "❌ 地圖權開未開啟！\n請點擊右上角⚙️，點擊教學中的「Places API」連結並啟用。";
         } else if (errorMsg.includes("Generative Language")) {
-            errorMsg = "❌ AI 權限未開啟！\n請點擊右上角⚙️進入設定，點擊教學中的「Gemini API」連結並按「啟用」。";
+            errorMsg = "❌ AI 權限未開啟！\n請點擊右上角⚙️，點擊教學中的「Gemini API」連結並啟用。";
         }
         alert(errorMsg);
     } finally {
