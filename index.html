@@ -476,40 +476,7 @@ function updateLoaderText(stage) {
     }
 }
 
-        // --- 2. 核心搜尋入口 (包含第一階段檢查) ---
-async function handleSearchClick() {
-    const apiKey = getStoredKey();
-    if (!apiKey) { document.getElementById('api-overlay').style.display = 'flex'; return; }
-    if (getUsageCount() >= DAILY_LIMIT) { alert("🚫 今日次數已滿。"); return; }
-
-    // 取得所有輸入狀態
-    const config = {
-        city: document.getElementById('city').value,
-        cityName: document.getElementById('city').options[document.getElementById('city').selectedIndex].text,
-        district: document.getElementById('district').value,
-        transport: document.getElementById('transport').value,
-        food: document.getElementById('food').options[document.getElementById('food').selectedIndex].text,
-        people: document.getElementById('people').value,
-        purpose: document.getElementById('purpose').value,
-        budget: document.getElementById('budget').options[document.getElementById('budget').selectedIndex].text,
-        station: document.getElementById('mrt-station').value,
-        isHidden: document.getElementById('btn-hidden').classList.contains('selected'),
-        isOpenOnly: document.getElementById('btn-open').classList.contains('selected')
-    };
-
-    // 第一階段驗證
-    if (!isNearbyMode) {
-        const hasMRT = ['Taipei', 'NewTaipei', 'Taoyuan', 'Taichung', 'Kaohsiung'];
-        const hasHSR = ['Taipei', 'NewTaipei', 'Taoyuan', 'HsinchuCounty', 'Miaoli', 'Taichung', 'Changhua', 'Yunlin', 'ChiayiCounty', 'Tainan', 'Kaohsiung'];
-        if (config.transport === 'mrt' && !hasMRT.includes(config.city)) { alert(`⚠️ ${config.cityName} 目前沒有捷運。`); return; }
-        if (config.transport === 'hsr' && !hasHSR.includes(config.city)) { alert(`⚠️ ${config.cityName} 目前沒有高鐵。`); return; }
-    }
-
-    startSearch(apiKey, config);
-}
-
-
-        
+      
         // --- 3. 執行搜尋與 API 串接 ---
 async function startSearch(apiKey, config) {
     const loader = document.getElementById('loader');
