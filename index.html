@@ -313,49 +313,54 @@
 </head>
 <body touch-action="none">
     <div id="api-overlay">
-        <div class="api-card">
-            <h2 style="color: #fff;">🔑 探索功能設定</h2>
-            <p style="font-size: 0.8rem; color: #888; margin-top: -10px;">GCP 設定較複雜，請依照引導操作</p>
-            
-            <button id="toggle-guide-btn" onclick="toggleApiGuide()">📖 查看快速申請教學 (必看)</button>
-            
-            <div id="api-guide-box">
-                <div class="guide-steps">
-                    <div class="step-title"><span class="step-num">1</span> 建立雲端專案</div>
-                    <a href="https://console.cloud.google.com/projectcreate" target="_blank" class="step-link-btn">點我前往建立 ➔</a>
+    <div class="api-card">
+        <h2 style="color: #fff;">🔑 探索功能設定</h2>
+        <p style="font-size: 0.85rem; color: #888; margin-top: -10px;">請依照下方引導開啟 Google 雲端權限</p>
+        
+        <button id="toggle-guide-btn" onclick="toggleApiGuide()">📖 查看快速申請教學 (建議首次使用閱讀)</button>
+        
+        <div id="api-guide-box">
+            <div class="guide-steps">
+                <div class="step-title"><span class="step-num">1</span> 建立雲端專案</div>
+                <a href="https://console.cloud.google.com/projectcreate" target="_blank" class="step-link-btn">前往 Google Cloud 建立 ➔</a>
 
-                    <div class="step-title"><span class="step-num">2</span> 啟用必要 API 權限</div>
-                    <div class="api-tag-container">
-                        <a href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank" class="api-tag" style="text-decoration: none;">
-                            <span class="api-tag-name">Places API</span>
-                            <span class="api-tag-desc">地圖數據</span>
-                        </a>
-                        <a href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" target="_blank" class="api-tag" style="text-decoration: none;">
-                            <span class="api-tag-name">Gemini API</span>
-                            <span class="api-tag-desc">推薦理由</span>
-                        </a>
-                    </div>
-
-                    <div class="step-title"><span class="step-num">3</span> 產生並複製 API 金鑰</div>
-                    <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="step-link-btn">點我建立金鑰 ➔</a>
-
-                    <div class="step-title"><span class="step-num">4</span> 綁定信用卡</div>
-                    <p style="font-size: 0.7rem; color: #ff6666; margin: 0 0 10px 5px;">*必須綁定信用卡地圖功能才會有結果</p>
+                <div class="step-title"><span class="step-num">2</span> 啟用必要 API 權限</div>
+                <div class="api-tag-container">
+                    <a href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank" class="api-tag" style="text-decoration: none;">
+                        <span class="api-tag-name">Places API</span>
+                        <span class="api-tag-desc">獲取地圖數據</span>
+                    </a>
+                    <a href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" target="_blank" class="api-tag" style="text-decoration: none;">
+                        <span class="api-tag-name">Gemini API</span>
+                        <span class="api-tag-desc">生成推薦理由</span>
+                    </a>
                 </div>
-            </div>
 
-            <div style="text-align: left; margin-top: 10px;">
-                <label style="color: #bbb; font-size: 0.85rem; margin-left: 5px;">貼上 API 金鑰 (AIza...)：</label>
-                <input type="password" id="api-key-input" class="api-input" placeholder="貼在這裡">
-            </div>
+                <div class="step-title"><span class="step-num">3</span> 產生 API 金鑰 (Key)</div>
+                <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="step-link-btn">建立憑證並複製金鑰 ➔</a>
 
-            <button class="api-save-btn" onclick="saveApiKey()">儲存設定並開啟探索</button>
-            <button onclick="document.getElementById('api-overlay').style.display='none'" style="background:none; border:none; color:#555; cursor:pointer; font-size: 0.85rem;">✕ 返回首頁</button>
+                <div class="step-title"><span class="step-num">4</span> 啟用結算帳戶</div>
+                <p style="font-size: 0.75rem; color: #aaa; margin: 5px 0 15px 5px; line-height: 1.4;">
+                    請於 GCP 側邊選單進入「結算」並<b>綁定信用卡</b>。<br>
+                    <span style="color: #ff6666;">*未綁定者，地圖功能將無法回傳資料。</span>
+                </p>
+            </div>
         </div>
+
+        <div style="margin-top: 10px;">
+            <div class="api-instruction">貼上您的 API 金鑰：</div>
+            <input type="password" id="api-key-input" class="api-input" placeholder="AIzaSyBw-xxxxxx...">
+        </div>
+
+        <button class="api-save-btn" onclick="saveApiKey()">儲存設定並開啟探索</button>
+
+        <button onclick="document.getElementById('api-overlay').style.display='none'" style="background:none; border:none; color:#555; cursor:pointer; font-size: 0.85rem; margin-top: 5px;">✕ 暫不設定，返回首頁</button>
     </div>
+</div>
 
     <div id="bg-container"></div>
 
+    <!-- 修正：移除重複標籤與孤兒 div -->
     <div id="loader">
         <div class="iris-container">
             <div class="iris-ring"></div>
