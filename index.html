@@ -805,7 +805,7 @@ function updateLoaderText(stage) {
 
     const prompt = `你是專業美食偵探。從名單選出最符「${cfg.food}」、預算「${cfg.budget}」、人數「${cfg.people}」、目的「${cfg.purpose}」的 6 家店：${JSON.stringify(simplifiedList)}。
     任務：1.計算距離(如"300m") 2.針對${cfg.purpose}寫理由 3.寫招牌菜。
-    輸出純 JSON 陣列。欄位：name, rating, review_count, signature, review_summary, reason, place_id, distance, address, photo_name。`;
+    輸出純 JSON 陣列。欄位：name, rating, review_count,price, signature, opening_hours,review_summary, reason, place_id, distance, address, photo_name。`;
 
     const response = await fetch(url, {
         method: "POST",
@@ -855,16 +855,18 @@ function updateLoaderText(stage) {
 
             <h3 style="margin:0;">${res.name}</h3>
             <div class="card-badges">
-                <span class="card-badge badge-rating">⭐ ${res.rating} (${res.review_count})</span>
+                <span class="card-badge badge-rating">⭐ googl評分${res.rating} (${res.review_count})</span>
+                <span class="card-badge badge-price">💰 價位 NT$ ${res.price}</span>
                 <span class="card-badge badge-distance">📍 距離 ${res.distance}</span>
             </div>
             <div style="font-size:0.75rem;color:#aaa;margin-bottom:10px;">🏠 ${res.address}</div>
-            <div class="info-row"><span class="info-label">🔥 招牌</span><span>${res.signature}</span></div>
+            <div class="info-row"><span class="info-label">🔥必點招牌</span><span>${res.signature}</span></div>
+            <div class="info-row"><span class="info-label">🕒 營業時間</span><span>${res.opening_hours}</span></div>
             <div class="card-summary">"${res.review_summary}"</div>
             <div class="info-row" style="margin-top:5px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
-                <span class="info-label">💡 推薦理由</span><span style="color:var(--accent-yellow)">${res.reason}</span>
+                <span class="info-label">💡 推薦原因</span><span style="color:var(--accent-yellow)">${res.reason}</span>
             </div>
-            <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 打開地圖</a>
+            <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 打開地圖查看詳情</a>
         `;
         
         wrapper.appendChild(card); 
