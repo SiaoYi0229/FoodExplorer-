@@ -27,65 +27,60 @@
         .bg-slide.active { opacity: 0.6; }
 
         #api-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
-/* --- 優化後的 API 教學介面 --- */
+/* --- 超強直覺教學 UI --- */
+.api-card {
+    padding: 30px 20px !important;
+    gap: 12px !important;
+}
+
 #api-guide-box {
     text-align: left;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 0.03);
     border-radius: 16px;
-    padding: 20px;
-    margin: 10px 0;
-    border: 1px solid rgba(255, 255, 255, 0.1); /* 移除左邊黃條，改全邊框 */
+    padding: 15px;
+    margin: 5px 0;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     display: none;
-    animation: slideDown 0.3s ease-out;
 }
+
+.step-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--accent-yellow);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.step-link-btn {
+    display: inline-block;
+    background: rgba(255, 204, 0, 0.15);
+    color: var(--accent-yellow);
+    padding: 6px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.75rem;
+    margin: 5px 0 12px 0;
+    border: 1px solid var(--accent-yellow);
+}
+
+.step-link-btn:hover { background: var(--accent-yellow); color: #000; }
 
 .api-tag-container {
     display: flex;
-    gap: 10px;
-    margin: 12px 0;
-    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
 }
 
 .api-tag {
     flex: 1;
-    background: rgba(255, 204, 0, 0.1);
-    border: 1px solid rgba(255, 204, 0, 0.3);
-    padding: 10px 5px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 8px;
     border-radius: 10px;
     text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.api-tag-name {
-    display: block;
-    color: var(--accent-yellow);
-    font-size: 0.75rem;
-    font-weight: bold;
-    margin-bottom: 4px;
-}
 
-.api-tag-desc {
-    display: block;
-    color: #bbb;
-    font-size: 0.65rem;
-    line-height: 1.2;
-}
-
-.guide-steps .step {
-    font-size: 0.85rem;
-    color: #eee;
-    margin-bottom: 15px;
-    display: flex;
-    gap: 12px;
-}
-
-.guide-steps .step span {
-    background: var(--accent-yellow);
-    color: #000;
-    font-weight: 800;
-    border-radius: 50%;
-    width: 20px; height: 20px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; font-size: 0.75rem;}
         .api-input { width: 100%; background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 15px; color: white; font-size: 1rem; margin-bottom: 15px; text-align: center; }
         .api-save-btn { width: 100%; background: var(--primary-orange); color: white; border: none; padding: 14px; border-radius: 12px; font-weight: bold; cursor: pointer; }
         
@@ -120,9 +115,9 @@
         select option { background-color: #222; }
 
         .toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
-        .toggle-btn { background: var(--input-bg); height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid transparent; font-size: 0.85rem; transition: 0.3s; }
-        .toggle-btn.selected { background: rgba(255,102,0,0.2); border-color: var(--primary-orange); color: var(--primary-orange); font-weight: bold; }
-
+       .toggle-btn { background: var(--input-bg); height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid transparent; font-size: 0.85rem; transition: 0.3s; }
+       .toggle-btn.selected { background: rgba(255,102,0,0.2); border-color: var(--primary-orange); color: var(--primary-orange); font-weight: bold; }
+       #btn-open.selected { background: rgba(46,204,113,0.15); border-color: #2ecc71; color: #2ecc71; }
         .footer-action { width: 100%; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; }
         .cta-button { width: 100%; background: linear-gradient(180deg, #FF8533, #FF6600); border: none; padding: 16px; font-weight: 700; border-radius: 16px; color: #fff; cursor: pointer; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(255, 102, 0, 0.4); transition: 0.3s; }
         
@@ -216,44 +211,46 @@
 <body touch-action="none">
     <div id="api-overlay">
     <div class="api-card">
-        <h2>🚀 進階設定</h2>
+        <h2 style="margin-bottom: 5px;">🔑 混合模式設定</h2>
+        <p style="font-size: 0.8rem; color: #999; margin-bottom: 10px;">GCP 設定較複雜，請跟著下方步驟操作</p>
         
-        <button id="toggle-guide-btn" onclick="toggleApiGuide()">📖 查看快速申請教學</button>
+        <button id="toggle-guide-btn" onclick="toggleApiGuide()" style="background: var(--primary-orange); color: white; border: none;">📖 顯示圖文申請教學 (必看)</button>
         
         <div id="api-guide-box">
             <div class="guide-steps">
-                <div class="step"><span>1</span> 前往 <a href="https://console.cloud.google.com/" target="_blank" style="color:var(--accent-yellow); text-decoration: underline;">GCP 控制台</a> 建立專案。</div>
-                <div class="step"><span>2</span> 搜尋並「啟用」以下兩項 API：</div>
-                
-                <!-- 橫向排版區 -->
+                <b class="step-title">第一步：建立專案</b>
+                <a href="https://console.cloud.google.com/projectcreate" target="_blank" class="step-link-btn">點我前往建立專案 ➔</a>
+
+                <b class="step-title">第二步：點擊「啟用」以下兩項 API</b>
                 <div class="api-tag-container">
-                    <div class="api-tag">
-                        <span class="api-tag-name">Generative Language</span>
-                        <span class="api-tag-desc">負責 AI 推薦理由</span>
-                    </div>
-                    <div class="api-tag">
-                        <span class="api-tag-name">Places API (New)</span>
-                        <span class="api-tag-desc">負責真實地圖數據</span>
-                    </div>
+                    <a href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank" class="api-tag" style="text-decoration: none;">
+                        <span class="api-tag-name">Places API</span>
+                        <span class="api-tag-desc" style="font-size: 0.6rem; color: #777;">點我前往啟用</span>
+                    </a>
+                    <a href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" target="_blank" class="api-tag" style="text-decoration: none;">
+                        <span class="api-tag-name">Gemini API</span>
+                        <span class="api-tag-desc" style="font-size: 0.6rem; color: #777;">點我前往啟用</span>
+                    </a>
                 </div>
 
-                <div class="step"><span>3</span> 在「憑證」建立並複製 <b>API 金鑰</b>。</div>
-                <div class="step"><span>4</span> 確保專案已<b>綁定信用卡</b>(每月贈$200額度)。</div>
+                <b class="step-title">第三步：產生金鑰 (API Key)</b>
+                <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="step-link-btn">點我前往建立憑證 ➔</a>
+                <p style="font-size: 0.7rem; color: #888; margin-top: -5px;">*點選「+建立憑證」>「API金鑰」</p>
+
+                <b class="step-title">第四步：重要！綁定信用卡</b>
+                <a href="https://console.cloud.google.com/billing" target="_blank" class="step-link-btn">點我前往結算設定 ➔</a>
+                <p style="font-size: 0.7rem; color: #ff6666;">*未綁定信用卡，地圖功能將無法運作</p>
             </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div class="api-instruction">請輸入您的 GCP API 金鑰：</div>
-            <input type="password" id="api-key-input" class="api-input" placeholder="AIzaSyBw...">
+        <div style="text-align: left; margin-top: 15px;">
+            <label style="color: #bbb; margin-left: 5px;">請貼上您的 API 金鑰 (AIza...)：</label>
+            <input type="password" id="api-key-input" class="api-input" placeholder="貼在這裡">
         </div>
 
-        <button class="api-save-btn" onclick="saveApiKey()">儲存設定並開啟探索</button>
+        <button class="api-save-btn" onclick="saveApiKey()">確認儲存</button>
 
-        <div class="api-warning">
-            ⚠️ 提醒：請確保使用的是 GCP 金鑰，而非 AI Studio。
-        </div>
-
-        <button onclick="document.getElementById('api-overlay').style.display='none'" style="background:none; border:none; color:#666; cursor:pointer;">✕ 返回首頁</button>
+        <button onclick="document.getElementById('api-overlay').style.display='none'" style="background:none; border:none; color:#555; cursor:pointer; font-size: 0.85rem;">✕ 暫不設定，返回首頁</button>
     </div>
 </div>
     <div id="bg-container"></div>
