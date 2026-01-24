@@ -170,17 +170,16 @@
     </div>
 
     <div id="bg-container"></div>
-    
+    <!-- 修正後的 Loader 結構 -->
     <div id="loader">
-    <div id="loader">
-    <div class="iris-container">
-        <div class="iris-ring"></div>
-        <div class="iris-ring"></div>
-        <div class="iris-ring"></div>
-        <div class="iris-center"></div>
+        <div class="iris-container">
+            <div class="iris-ring"></div>
+            <div class="iris-ring"></div>
+            <div class="iris-ring"></div>
+            <div class="iris-center"></div>
+        </div>
+        <p id="loader-text" class="loader-text">正在巷弄探索中...</p>
     </div>
-    <p id="loader-text" class="loader-text">正在巷弄探索中...</p>
-</div>
     </div>
 
     <div class="container" id="main-ui">
@@ -444,21 +443,22 @@ const mrtLinesTaipei = {
         async function handleSearchClick() {
             if (!getStoredKey()) { document.getElementById('api-overlay').style.display = 'flex'; return; }
             if (getUsageCount() >= DAILY_LIMIT) { alert("🚫 今日次數已滿。"); return; }
-            if (!isNearbyMode) {
-                const cityKey = document.getElementById('city').value;
-                const cityName = document.getElementById('city').options[document.getElementById('city').selectedIndex].text;
-                const transport = document.getElementById('transport').value;
-                const hasMRT = ['Taipei', 'NewTaipei', 'Taoyuan', 'Taichung', 'Kaohsiung'];
-                const hasHSR = ['Taipei', 'NewTaipei', 'Taoyuan', 'HsinchuCounty', 'Miaoli', 'Taichung', 'Changhua', 'Yunlin', 'ChiayiCounty', 'Tainan', 'Kaohsiung'];
-                const hasAirport = ['Taipei', 'Taoyuan', 'Taichung', 'Tainan', 'Kaohsiung', 'Hualien', 'Taitung', 'Penghu', 'Kinmen', 'Lienchiang'];
-                if (transport === 'mrt' && !hasMRT.includes(cityKey)) { alert(`⚠️ ${cityName} 目前沒有捷運。`); return; }
-                if (transport === 'hsr' && !hasHSR.includes(cityKey)) { alert(`⚠️ ${cityName} 目前沒有高鐵。`); return; }
-                if (transport === 'airport' && !hasAirport.includes(cityKey)) { alert(`⚠️ ${cityName} 目前沒有機場。`); return; }
-            }
-            startSearch(getStoredKey());
-        }
+            // --- 修正後的搜尋按鈕觸發邏輯 ---
+    if (!isNearbyMode) {
+        const hasMRT = ['Taipei', 'NewTaipei', 'Taoyuan', 'Taichung', 'Kaohsiung'];
+        const hasHSR = ['Taipei', 'NewTaipei', 'Taoyuan', 'HsinchuCounty', 'Miaoli', 'Taichung', 'Changhua', 'Yunlin', 'ChiayiCounty', 'Tainan', 'Kaohsiung'];
+        const hasAirport = ['Taipei', 'Taoyuan', 'Taichung', 'Tainan', 'Kaohsiung', 'Hualien', 'Taitung', 'Penghu', 'Kinmen', 'Lienchiang'];
+        
+        if (config.transport === 'mrt' && !hasMRT.includes(config.city)) { alert(`⚠️ ${config.cityName} 目前沒有捷運。`); return; }
+        if (config.transport === 'hsr' && !hasHSR.includes(config.city)) { alert(`⚠️ ${config.cityName} 目前沒有高鐵。`); return; }
+        if (config.transport === 'airport' && !hasAirport.includes(config.city)) { alert(`⚠️ ${config.cityName} 目前沒有機場。`); return; }
+    }
+    
+    // 關鍵：必須把 config 傳給 startSearch 函式
+    startSearch(apiKey, config);
+}
 
-        / --- 1. 定義四個階段的文字 ---
+      // --- 修正後的文字切換函式 (補齊斜線) ---
 function updateLoaderText(stage) {
     const textElem = document.getElementById('loader-text');
     const texts = [
@@ -619,22 +619,28 @@ async function fetchRealPlaces(apiKey, cfg) {
                 const wrapper = document.createElement('div'); wrapper.className = 'swipe-card-wrapper';
                 const card = document.createElement('div'); card.className = 'swipe-card';
                 card.innerHTML = `
-                    <div class="swipe-hints"><div class="hint-item">← NOPE</div><div class="hint-item">LIKE →</div></div>
-                    <div class="swipe-label label-like">LIKE</div><div class="swipe-label label-nope">NOPE</div>
-                    <div class="label-chosen">🏆 最終首選</div>
-                    <div style="width:100%;height:160px;border-radius:14px;overflow:hidden;margin-bottom:10px;"><img src="${res.photo_url}" style="width:100%;height:100%;object-fit:cover;"></div>
-                    <h3 style="margin:0;">${res.name}</h3>
-                    <div class="card-badges"><span class="card-badge badge-rating">⭐ ${res.rating} (${res.review_count})</span><span class="card-badge badge-distance">📍 距離 ${res.distance}</span></div>
-                    <div style="font-size:0.75rem;color:#aaa;margin-bottom:10px;">🏠 ${res.address}</div>
-                    <div class="info-row"><span class="info-label">🔥 招牌</span><span>${res.signature}</span></div>
-                    <div class="card-summary">"${res.review_summary}"</div>
-                    <div class="info-row" style="margin-top:5px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;"><span class="info-label">💡 推薦理由</span><span style="color:var(--accent-yellow)">${res.reason}</span></div>
-                    ${res.photo_url ? `
+    <div class="swipe-hints"><div class="hint-item">← NOPE</div><div class="hint-item">LIKE →</div></div>
+    <div class="swipe-label label-like">LIKE</div><div class="swipe-label label-nope">NOPE</div>
+    <div class="label-chosen">🏆 最終首選</div>
+    
+    ${res.photo_url ? `
     <div style="width:100%; height:160px; border-radius:14px; overflow:hidden; margin-bottom:12px;">
         <img src="${res.photo_url}" style="width:100%; height:100%; object-fit:cover;">
     </div>` : ''}
-                    <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 打開地圖</a>
-                `;
+
+    <h3 style="margin:0;">${res.name}</h3>
+    <div class="card-badges">
+        <span class="card-badge badge-rating">⭐ ${res.rating} (${res.review_count})</span>
+        <span class="card-badge badge-distance">📍 距離 ${res.distance}</span>
+    </div>
+    <div style="font-size:0.75rem;color:#aaa;margin-bottom:10px;">🏠 ${res.address}</div>
+    <div class="info-row"><span class="info-label">🔥 招牌</span><span>${res.signature}</span></div>
+    <div class="card-summary">"${res.review_summary}"</div>
+    <div class="info-row" style="margin-top:5px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
+        <span class="info-label">💡 推薦理由</span><span style="color:var(--accent-yellow)">${res.reason}</span>
+    </div>
+    <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 打開地圖</a>
+`;
                 wrapper.appendChild(card); stack.insertBefore(wrapper, stack.firstChild); initSwipe(card, wrapper, res);
             });
             const closeBtn = document.createElement('button'); closeBtn.className = 'close-swiper'; closeBtn.innerText = '← 返回修改'; closeBtn.onclick = resetUI; stack.appendChild(closeBtn);
