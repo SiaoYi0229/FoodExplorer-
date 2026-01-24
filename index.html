@@ -71,15 +71,79 @@
         .usage-hint { font-size: 0.85rem; opacity: 0.7; color: #ffffff; font-weight: 500; flex: 0 0 auto; margin-top: 8px; }
 
         /* 偵探風腳印 Loader */
-        #loader { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10000; background: radial-gradient(circle, #2c1e14 0%, #000 100%); flex-direction: column; align-items: center; justify-content: center; }
-        .map-parchment { position: relative; width: 300px; height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .footprints-container { position: relative; width: 100px; height: 100px; margin-bottom: 30px; }
-        .footprint { position: absolute; width: 20px; height: 10px; background: #4a2e19; border-radius: 50% 50% 40% 40%; opacity: 0; filter: blur(1px); }
-        .footprint.left { animation: walk-left 2s infinite; }
-        .footprint.right { animation: walk-right 2s infinite; animation-delay: 1s; }
-        @keyframes walk-left { 0% { transform: translate(0, 0) rotate(-20deg); opacity: 0; } 20% { opacity: 0.8; } 80% { transform: translate(-20px, -40px) rotate(-20deg); opacity: 0; } 100% { opacity: 0; } }
-        @keyframes walk-right { 0% { transform: translate(20px, -10px) rotate(20deg); opacity: 0; } 20% { opacity: 0.8; } 80% { transform: translate(40px, -50px) rotate(20deg); opacity: 0; } 100% { opacity: 0; } }
-        .marauders-text { color: #8b5a2b; font-size: 1.2rem; font-weight: bold; text-align: center; margin-top: 20px; min-height: 2em; transition: opacity 0.5s ease; }
+        /* --- 精緻雷達與腳印 Loader --- */
+#loader {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.6); /* 半透明，保留主畫面背景 */
+    backdrop-filter: blur(8px); /* 磨砂玻璃效果 */
+    -webkit-backdrop-filter: blur(8px);
+    flex-direction: column; align-items: center; justify-content: center;
+}
+
+.radar-container {
+    position: relative;
+    width: 220px; height: 220px;
+    background: rgba(255, 102, 0, 0.05);
+    border: 2px solid rgba(255, 102, 0, 0.3);
+    border-radius: 50%;
+    box-shadow: 0 0 30px rgba(255, 102, 0, 0.2), inset 0 0 20px rgba(255, 102, 0, 0.1);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+}
+
+/* 雷達掃描線 */
+.radar-container::after {
+    content: ''; position: absolute; width: 100%; height: 100%;
+    background: conic-gradient(from 0deg, transparent 70%, rgba(255, 102, 0, 0.4));
+    border-radius: 50%;
+    animation: radar-sweep 2s linear infinite;
+}
+
+/* 雷達網格線 */
+.radar-grid {
+    position: absolute; width: 100%; height: 100%;
+    background-image: 
+        radial-gradient(circle, transparent 30%, rgba(255,102,0,0.1) 31%, rgba(255,102,0,0.1) 32%, transparent 33%),
+        radial-gradient(circle, transparent 60%, rgba(255,102,0,0.1) 61%, rgba(255,102,0,0.1) 62%, transparent 63%);
+}
+
+/* 腳印動態軌跡 */
+.footprints-path {
+    position: relative; width: 60px; height: 120px; z-index: 5;
+}
+
+.footprint {
+    position: absolute; width: 18px; height: 32px;
+    background: var(--primary-orange);
+    opacity: 0;
+    -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 30 50" xmlns="http://www.w3.org/2000/svg"><ellipse cx="15" cy="15" rx="12" ry="18"/><ellipse cx="15" cy="38" rx="9" ry="11"/></svg>');
+    mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 30 50" xmlns="http://www.w3.org/2000/svg"><ellipse cx="15" cy="15" rx="12" ry="18"/><ellipse cx="15" cy="38" rx="9" ry="11"/></svg>');
+    -webkit-mask-size: contain; mask-size: contain;
+}
+
+/* 設定 4 個腳印形成走路路徑 */
+.fp-1 { bottom: 0; left: 0; animation: footstep 3s infinite; animation-delay: 0s; }
+.fp-2 { bottom: 30px; right: 0; animation: footstep 3s infinite; animation-delay: 0.7s; }
+.fp-3 { bottom: 60px; left: 0; animation: footstep 3s infinite; animation-delay: 1.4s; }
+.fp-4 { bottom: 90px; right: 0; animation: footstep 3s infinite; animation-delay: 2.1s; }
+
+@keyframes radar-sweep { to { transform: rotate(360deg); } }
+
+@keyframes footstep {
+    0% { opacity: 0; transform: scale(0.8); }
+    10% { opacity: 0.8; transform: scale(1); }
+    40% { opacity: 0; transform: scale(1.1); }
+    100% { opacity: 0; }
+}
+
+.loader-text {
+    margin-top: 30px; color: #fff; font-weight: bold; font-size: 1.1rem;
+    text-shadow: 0 0 10px rgba(255, 102, 0, 0.5); letter-spacing: 2px;
+}
 
         /* 卡片與滑動系統 */
         #swiper-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; display: none; flex-direction: column; align-items: center; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
@@ -131,13 +195,17 @@
     <div id="bg-container"></div>
     
     <div id="loader">
-        <div class="map-parchment">
-            <div class="footprints-container">
-                <div class="footprint left"></div>
-                <div class="footprint right"></div>
-            </div>
-            <p id="loader-text" class="marauders-text">正在鎖定城市中的香氣來源...</p>
+    <div class="radar-container">
+        <div class="radar-grid"></div>
+        <div class="footprints-path">
+            <div class="footprint fp-1"></div>
+            <div class="footprint fp-2"></div>
+            <div class="footprint fp-3"></div>
+            <div class="footprint fp-4"></div>
         </div>
+    </div>
+    <p id="loader-text" class="loader-text">正在鎖定城市中的香氣來源...</p>
+</div>
     </div>
 
     <div class="container" id="main-ui">
@@ -415,6 +483,35 @@ const mrtLinesTaipei = {
             startSearch(getStoredKey());
         }
 
+        function updateLoaderText() {
+    const texts = [
+        "正在鎖定城市中的香氣來源...",
+        "追蹤巷弄深處的美味足跡...",
+        "正在調閱資深老饕的秘密檔案...",
+        "過濾掉干擾，定位靈魂料理...",
+        "偵查結束，美味座標已解鎖！"
+    ];
+    let i = 0;
+    const textElem = document.getElementById('loader-text');
+    
+    // 先確保文字是顯示的
+    textElem.innerText = texts[0];
+    textElem.style.opacity = 1;
+
+    // 清除舊的計時器防止重複疊加
+    if (loaderInterval) clearInterval(loaderInterval);
+
+    loaderInterval = setInterval(() => {
+        textElem.style.opacity = 0;
+        setTimeout(() => {
+            i = (i + 1) % texts.length;
+            textElem.innerText = texts[i];
+            textElem.style.opacity = 1;
+        }, 500);
+    }, 2500);
+}
+        
+        
         async function startSearch(apiKey) {
     const loader = document.getElementById('loader');
     const btn = document.getElementById('search-btn');
@@ -453,6 +550,59 @@ const mrtLinesTaipei = {
         clearInterval(loaderInterval);
         loader.style.display = 'none'; 
         btn.disabled = false;
+    }
+}async function startSearch(apiKey) {
+    const loader = document.getElementById('loader');
+    const btn = document.getElementById('search-btn');
+
+    // 1. 顯示雷達動畫並啟動動態文字切換
+    loader.style.display = 'flex';
+    updateLoaderText();
+    btn.disabled = true;
+
+    // 2. 收集表單數據 (確保抓取：食物、預算、目的、人數、區域、站點、功能開關)
+    // 這裡的 ID 完全對應您 HTML 中的定義
+    const config = {
+        food: document.getElementById('food').options[document.getElementById('food').selectedIndex].text,
+        budget: document.getElementById('budget').options[document.getElementById('budget').selectedIndex].text,
+        purpose: document.getElementById('purpose').options[document.getElementById('purpose').selectedIndex].text,
+        people: document.getElementById('people').value,
+        city: document.getElementById('city').options[document.getElementById('city').selectedIndex].text,
+        district: document.getElementById('district').value,
+        station: document.getElementById('mrt-station').value,
+        isHidden: document.getElementById('btn-hidden').classList.contains('selected'),
+        isOpenOnly: document.getElementById('btn-open').classList.contains('selected')
+    };
+
+    try {
+        // --- 第一階段：抓取 Google Places 真實數據 ---
+        // 此函式會處理關鍵字淨化（例如過濾「全區」、「全部」）
+        const rawPlaces = await fetchRealPlaces(apiKey, config);
+
+        if (!rawPlaces || rawPlaces.length === 0) {
+            throw new Error("在該區域找不到符合條件的真實餐廳，請嘗試更換類別或擴大區域。");
+        }
+
+        // --- 第二階段：將名單交給 Gemini 進行智慧推薦與文案包裝 ---
+        const finalRecommendations = await getAiRanking(apiKey, config, rawPlaces);
+
+        if (finalRecommendations && finalRecommendations.length > 0) {
+            // 成功獲取結果：增加使用次數、重置清單並顯示卡片
+            incrementUsage();
+            keptRestaurants = []; 
+            isFinalOne = false;
+            renderCards(finalRecommendations);
+        } else {
+            throw new Error("AI 分析名單時出現問題，請再試一次。");
+        }
+    } catch (e) {
+        console.error("搜尋出錯:", e);
+        alert(e.message || "連線不穩定，請檢查 API Key 或網路狀態。");
+    } finally {
+        // 3. 結束搜尋：停止文字計時器，隱藏雷達動畫，恢復按鈕
+        if (loaderInterval) clearInterval(loaderInterval);
+        loader.style.display = 'none';
+        btn.disabled = (getUsageCount() >= DAILY_LIMIT); // 若次數滿了則維持禁用
     }
 }
 
