@@ -784,8 +784,10 @@ async function fetchRealPlaces(apiKey, cfg) {
 }
 
         async function getAiRanking(apiKey, cfg, rawPlaces) {
+    // 建議使用 1.5-flash 以確保 API 穩定性與 JSON 模式運作
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
+    // 1. 簡化 Google 原始數據，只餵給 AI 必要的資訊
     const simplifiedList = rawPlaces.map(p => ({
         name: p.displayName.text,
         rating: p.rating,
@@ -798,79 +800,110 @@ async function fetchRealPlaces(apiKey, cfg) {
         lng: p.location.longitude
     }));
 
+    // 2. 建立強大的提示詞，包含您所有的篩選條件
     const prompt = `你現在是專業美食偵探。
+    使用者座標：(${userCoords.lat || '未知'}, ${userCoords.lng || '未知'})
     需求：想吃「${cfg.food}」、預算「${cfg.budget}」、人數「${cfg.people}」、目的「${cfg.purpose}」。
-    請從名單選出最符合的 6 家店：${JSON.stringify(simplifiedList)}
-    輸出純 JSON 陣列。欄位：name, rating, review_count, signature, review_summary, reason, place_id, distance, address, photo_name。`;
+    隱藏版優先：${cfg.isHidden ? "是 (優先挑選評分高但評論數較少的店家)" : "否"}
+
+    請從以下真實名單中，精選出最符合上述需求的 6 家店：
+    ${JSON.stringify(simplifiedList)}
+
+    【任務要求】：
+    1. 計算每家店與使用者的距離，輸出格式如 "350m" 或 "1.2km"。
+    2. 為每家店撰寫一個針對「${cfg.purpose}」的感性推薦理由。
+    3. 為每家店推敲一個必點招牌菜 (signature)。
+    4. 必須嚴格保留原始的 place_id, address, photo_name。
+    5. 僅輸出純 JSON 陣列，禁止包含任何解釋文字。
+
+    JSON 輸出欄位：name, rating, review_count, signature, review_summary, reason, place_id, distance, address, photo_name。`;
 
     const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { response_mime_type: "application/json", temperature: 0.2 }
+            generationConfig: { 
+                response_mime_type: "application/json", 
+                temperature: 0.2 
+            }
         })
     });
 
     const result = await response.json();
 
-    // --- 關鍵修正：檢查 API 是否回傳錯誤 ---
+    // --- 錯誤防護邏輯 ---
     if (result.error) {
-        throw new Error(`AI 服務報錯: ${result.error.message}`);
+        throw new Error(`AI 服務錯誤: ${result.error.message}`);
     }
     if (!result.candidates || !result.candidates[0].content.parts) {
-        throw new Error("AI 無法產生推薦，請確保您的 API Key 已啟用 'Generative Language API'。");
+        throw new Error("AI 無法產生推薦，請檢查 API Key 權限是否開啟 'Generative Language API'。");
     }
 
     try {
         const recommendations = JSON.parse(result.candidates[0].content.parts[0].text);
+        
         return recommendations.map(res => ({
             ...res,
+            // 修正：只有在 Google 有照片名稱時才建立網址，其餘設為 null 供 renderCards 判斷
             photo_url: res.photo_name 
                 ? `https://places.googleapis.com/v1/${res.photo_name}/media?key=${apiKey}&maxHeightPx=400`
-                : null, // 如果沒照片就給 null
-            map_query: `https://www.google.com/maps/search/?api=1&query_place_id=${res.place_id}`
+                : null,
+            // 修正：100% 精準的地圖導航連結
+            map_query: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.name)}&query_place_id=${res.place_id}`
         }));
     } catch (e) {
-        throw new Error("AI 回傳格式有誤，請再試一次。");
+        console.error("JSON 解析失敗:", e);
+        throw new Error("AI 回傳資料格式異常，請重試一次。");
     }
 }
         function renderCards(restaurants) {
-            document.getElementById('main-ui').classList.add('blur-mode');
-            const stack = document.getElementById('card-stack'); stack.innerHTML = ''; 
-            document.getElementById('swiper-overlay').style.display = 'flex';
-            isFinalOne = (restaurants.length === 1);
-            restaurants.forEach((res) => {
-                const wrapper = document.createElement('div'); wrapper.className = 'swipe-card-wrapper';
-                const card = document.createElement('div'); card.className = 'swipe-card';
-                // --- 修正後的卡片 HTML (確保有照片才顯示，且不重複) ---
-card.innerHTML = `
-    <div class="swipe-hints"><div class="hint-item">← NOPE</div><div class="hint-item">LIKE →</div></div>
-    <div class="swipe-label label-like">LIKE</div><div class="swipe-label label-nope">NOPE</div>
-    <div class="label-chosen">🏆 最終首選</div>
-    
-    ${res.photo_url ? `
-    <div style="width:100%; height:170px; border-radius:14px; overflow:hidden; margin-bottom:12px; background:#000;">
-        <img src="${res.photo_url}" style="width:100%; height:100%; object-fit:cover;">
-    </div>` : ''}
+    document.getElementById('main-ui').classList.add('blur-mode');
+    const stack = document.getElementById('card-stack'); 
+    stack.innerHTML = ''; 
+    document.getElementById('swiper-overlay').style.display = 'flex';
+    isFinalOne = (restaurants.length === 1);
 
-    <h3 style="margin:0;">${res.name}</h3>
-    <div class="card-badges">
-        <span class="card-badge badge-rating">⭐ ${res.rating} (${res.review_count})</span>
-        <span class="card-badge badge-distance">📍 距離 ${res.distance}</span>
-    </div>
-    <div style="font-size:0.75rem;color:#aaa;margin-bottom:10px;">🏠 ${res.address}</div>
-    <div class="info-row"><span class="info-label">🔥 招牌</span><span>${res.signature}</span></div>
-    <div class="card-summary">"${res.review_summary}"</div>
-    <div class="info-row" style="margin-top:5px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
-        <span class="info-label">💡 推薦理由</span><span style="color:var(--accent-yellow)">${res.reason}</span>
-    </div>
-    <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 打開地圖</a>
-`;
-                wrapper.appendChild(card); stack.insertBefore(wrapper, stack.firstChild); initSwipe(card, wrapper, res);
-            });
-            const closeBtn = document.createElement('button'); closeBtn.className = 'close-swiper'; closeBtn.innerText = '← 返回修改'; closeBtn.onclick = resetUI; stack.appendChild(closeBtn);
-        }
+    restaurants.forEach((res) => {
+        const wrapper = document.createElement('div'); wrapper.className = 'swipe-card-wrapper';
+        const card = document.createElement('div'); card.className = 'swipe-card';
+        
+        card.innerHTML = `
+            <!-- 恢復：原本的滑動標籤設計 -->
+            <div class="swipe-hints"><div class="hint-item">← NOPE</div><div class="hint-item">LIKE →</div></div>
+            <div class="swipe-label label-like">LIKE</div>
+            <div class="swipe-label label-nope">NOPE</div>
+            <div class="label-chosen">🏆 最終首選</div>
+
+            <!-- 修正：嚴格執行有照片才顯示，沒照片直接消失 -->
+            ${res.photo_url ? `
+                <div style="width:100%; height:170px; border-radius:14px; overflow:hidden; margin-bottom:12px;">
+                    <img src="${res.photo_url}" style="width:100%; height:100%; object-fit:cover;">
+                </div>` : ''}
+
+            <h3 style="margin:0;">${res.name}</h3>
+            <div class="card-badges">
+                <span class="card-badge badge-rating">⭐ ${res.rating} (${res.review_count})</span>
+                <span class="card-badge badge-distance">📍 距離 ${res.distance}</span>
+            </div>
+            <div style="font-size:0.75rem;color:#aaa;margin-bottom:10px;">🏠 ${res.address}</div>
+            <div class="info-row"><span class="info-label">🔥 招牌</span><span>${res.signature}</span></div>
+            <div class="card-summary">"${res.review_summary}"</div>
+            <div class="info-row" style="margin-top:5px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
+                <span class="info-label">💡 推薦理由</span><span style="color:var(--accent-yellow)">${res.reason}</span>
+            </div>
+            <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 打開地圖</a>
+        `;
+        
+        wrapper.appendChild(card); 
+        stack.insertBefore(wrapper, stack.firstChild); 
+        initSwipe(card, wrapper, res);
+    });
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'close-swiper'; closeBtn.innerText = '← 返回修改'; 
+    closeBtn.onclick = resetUI; stack.appendChild(closeBtn);
+}
 
         function initSwipe(card, wrapper, res) {
             let startX=0,startY=0,currentX=0,isScrolling=false;
