@@ -659,13 +659,11 @@ function updateLoaderText(stage) {
     }
 }
 
-       // --- 2. 修正後的搜尋入口 (修正變數定義順序) ---
-async function handleSearchClick() {
+       async function handleSearchClick() {
     const apiKey = getStoredKey();
     if (!apiKey) { document.getElementById('api-overlay').style.display = 'flex'; return; }
-    if (getUsageCount() >= DAILY_LIMIT) { alert("🚫 今日次數已滿。"); return; }
-
-    // 【重要修正】：必須先定義 config 才能進行後續驗證
+    
+    // 取得所有輸入狀態 (不刪除任何欄位)
     const config = {
         city: document.getElementById('city').value,
         cityName: document.getElementById('city').options[document.getElementById('city').selectedIndex].text,
@@ -680,6 +678,9 @@ async function handleSearchClick() {
         isOpenOnly: document.getElementById('btn-open').classList.contains('selected')
     };
 
+    if (getUsageCount() >= DAILY_LIMIT) { alert("🚫 今日探索次數已滿。"); return; }
+
+    // 恢復您第一份的嚴格驗證邏輯
      if (!isNearbyMode) {
                 const cityKey = document.getElementById('city').value;
                 const cityName = document.getElementById('city').options[document.getElementById('city').selectedIndex].text;
@@ -691,23 +692,20 @@ async function handleSearchClick() {
                 if (transport === 'hsr' && !hasHSR.includes(cityKey)) { alert(`⚠️ ${cityName} 目前沒有高鐵。`); return; }
                 if (transport === 'airport' && !hasAirport.includes(cityKey)) { alert(`⚠️ ${cityName} 目前沒有機場。`); return; }
             }
-
     startSearch(apiKey, config);
 }
-
      
       
-        // --- 3. 搜尋程序 (包含 4 階段文字切換與完整的錯誤引導) ---
-async function startSearch(apiKey, config) {
+        async function startSearch(apiKey, config) {
     const loader = document.getElementById('loader');
     const btn = document.getElementById('search-btn');
     
     loader.style.display = 'flex';
-    updateLoaderText(0); // 階段 0: 定位座標
+    updateLoaderText(0); 
     btn.disabled = true;
 
     try {
-        // --- 階段 1: Google Places 數據抓取 ---
+        // 第一階段：Google 數據
         updateLoaderText(1);
         const rawPlaces = await fetchRealPlaces(apiKey, config);
         
@@ -715,11 +713,11 @@ async function startSearch(apiKey, config) {
             throw new Error("在該區域找不到符合條件的店家，請嘗試放寬搜尋條件或更換類別。");
         }
 
-        // --- 階段 2: 模擬過濾感 (增加視覺節奏) ---
+        // 第二階段：模擬過濾感
         updateLoaderText(2); 
         await new Promise(r => setTimeout(r, 800)); 
         
-        // --- 階段 3: Gemini AI 加工撰寫 ---
+        // 第三階段：AI 加工
         updateLoaderText(3);
         const finalRecommendations = await getAiRanking(apiKey, config, rawPlaces);
 
@@ -731,62 +729,48 @@ async function startSearch(apiKey, config) {
         }
 
     } catch (e) {
-        // --- 您要求的精準錯誤引導邏輯 ---
         console.error(e);
         let errorMsg = e.message;
-
+        // 針對您說 API 難用，提供的精準引導
         if (errorMsg.includes("Places API")) {
             errorMsg = "❌ 地圖權限未開啟！\n請點擊右上角⚙️進入設定，點擊教學中的「Places API」連結並啟用。";
         } else if (errorMsg.includes("Generative Language")) {
             errorMsg = "❌ AI 權限未開啟！\n請點擊右上角⚙️進入設定，點擊教學中的「Gemini API」連結並啟用。";
         } else if (errorMsg.includes("Candidates")) {
-            errorMsg = "❌ AI 無法生成內容！\n請檢查 API Key 是否正確且已啟用 'Generative Language API'。";
+            errorMsg = "❌ AI 無法產生推薦，通常是因為 API Key 尚未生效或結算帳戶問題。";
         }
-        
         alert(errorMsg);
-
     } finally {
-        // --- 搜尋結束後的清理 ---
         if (loaderInterval) clearInterval(loaderInterval);
         loader.style.display = 'none';
-        // 若次數已滿則不恢復按鈕，否則恢復
-        btn.disabled = (getUsageCount() >= DAILY_LIMIT); 
+        btn.disabled = (getUsageCount() >= DAILY_LIMIT);
     }
 }
 
-        // --- 3. 修正後的 fetchRealPlaces (解決找不到店家的關鍵關鍵) ---
-async function fetchRealPlaces(apiKey, cfg) {
-    // 【關鍵淨化】：去除括號與無效字眼，Google 才能搜到
-    let cleanFood = cfg.food;
-    if (cleanFood.includes("全部") || cleanFood.includes("all")) {
-        cleanFood = "熱門美食餐廳";
-    }
-
+        async function fetchRealPlaces(apiKey, cfg) {
+    // 【關鍵修復】：過濾括號與無效搜尋詞
+    let cleanFood = cfg.food.replace(" (什麼都想吃)", "").replace("全部", "熱門餐廳美食");
     let cleanDist = (cfg.district === "全區") ? "" : cfg.district;
     
-    // 組合最終搜尋字串
     let query = isNearbyMode ? cleanFood : `${cfg.cityName} ${cleanDist} ${cleanFood}`;
+
+    // 車站模式處理
+    if (!isNearbyMode && cfg.station && cfg.transport !== 'none') {
+        query = `${cfg.cityName} ${cfg.station}站附近 ${cleanFood}`;
+    }
 
     const requestBody = {
         textQuery: query,
         maxResultCount: 15,
         languageCode: "zh-TW",
         regionCode: "TW",
-        openNow: cfg.isOpenOnly // 只有在勾選「營業中」時才過濾
+        openNow: cfg.isOpenOnly 
     };
 
-    // 嚴格範圍控制 (1公里 vs 800公尺)
     if (isNearbyMode && userCoords.lat) {
         requestBody.locationBias = {
             circle: { center: { latitude: userCoords.lat, longitude: userCoords.lng }, radius: 1000.0 }
         };
-    } else if (cfg.station && cfg.transport !== 'none') {
-        // 車站模式中心點由 AI 計算距離，這裡先偏向城市區域搜尋
-        requestBody.locationBias = {
-            circle: { center: { latitude: userCoords.lat || 25.04, longitude: userCoords.lng || 121.51 }, radius: 800.0 }
-        };
-        query = `${cfg.cityName} ${cfg.station}站附近 ${cleanFood}`;
-        requestBody.textQuery = query;
     }
 
     const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
@@ -799,19 +783,14 @@ async function fetchRealPlaces(apiKey, cfg) {
         body: JSON.stringify(requestBody)
     });
     const data = await response.json();
-
-    // 增加錯訊息檢查，幫使用者找出 API Key 權限問題
-    if (data.error) {
-        throw new Error(`Google API 錯誤: ${data.error.message}`);
-    }
+    if (data.error) throw new Error(data.error.message);
     return data.places || [];
 }
 
         async function getAiRanking(apiKey, cfg, rawPlaces) {
-    // 建議使用 1.5-flash 以確保 API 穩定性與 JSON 模式運作
+    // 使用目前最穩定的 flash 模型
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-    // 1. 簡化 Google 原始數據，只餵給 AI 必要的資訊
     const simplifiedList = rawPlaces.map(p => ({
         name: p.displayName.text,
         rating: p.rating,
@@ -824,62 +803,31 @@ async function fetchRealPlaces(apiKey, cfg) {
         lng: p.location.longitude
     }));
 
-    // 2. 建立強大的提示詞，包含您所有的篩選條件
-    const prompt = `你現在是專業美食偵探。
-    使用者座標：(${userCoords.lat || '未知'}, ${userCoords.lng || '未知'})
-    需求：想吃「${cfg.food}」、預算「${cfg.budget}」、人數「${cfg.people}」、目的「${cfg.purpose}」。
-    隱藏版優先：${cfg.isHidden ? "是 (優先挑選評分高但評論數較少的店家)" : "否"}
-
-    請從以下真實名單中，精選出最符合上述需求的 6 家店：
-    ${JSON.stringify(simplifiedList)}
-
-    【任務要求】：
-    1. 計算每家店與使用者的距離，輸出格式如 "350m" 或 "1.2km"。
-    2. 為每家店撰寫一個針對「${cfg.purpose}」的感性推薦理由。
-    3. 為每家店推敲一個必點招牌菜 (signature)。
-    4. 必須嚴格保留原始的 place_id, address, photo_name。
-    5. 僅輸出純 JSON 陣列，禁止包含任何解釋文字。
-
-    JSON 輸出欄位：name, rating, review_count, signature, review_summary, reason, place_id, distance, address, photo_name。`;
+    const prompt = `你是專業美食偵探。從名單選出最符「${cfg.food}」、預算「${cfg.budget}」、人數「${cfg.people}」、目的「${cfg.purpose}」的 6 家店：${JSON.stringify(simplifiedList)}。
+    任務：1.計算距離(如"300m") 2.針對${cfg.purpose}寫理由 3.寫招牌菜。
+    輸出純 JSON 陣列。欄位：name, rating, review_count, signature, review_summary, reason, place_id, distance, address, photo_name。`;
 
     const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { 
-                response_mime_type: "application/json", 
-                temperature: 0.2 
-            }
+            generationConfig: { response_mime_type: "application/json", temperature: 0.2 }
         })
     });
 
     const result = await response.json();
+    if (!result.candidates) throw new Error("AI Candidates undefined - 請檢查 Gemini API 權限。");
 
-    // --- 錯誤防護邏輯 ---
-    if (result.error) {
-        throw new Error(`AI 服務錯誤: ${result.error.message}`);
-    }
-    if (!result.candidates || !result.candidates[0].content.parts) {
-        throw new Error("AI 無法產生推薦，請檢查 API Key 權限是否開啟 'Generative Language API'。");
-    }
-
-    try {
-        const recommendations = JSON.parse(result.candidates[0].content.parts[0].text);
-        
-        return recommendations.map(res => ({
-            ...res,
-            // 修正：只有在 Google 有照片名稱時才建立網址，其餘設為 null 供 renderCards 判斷
-            photo_url: res.photo_name 
-                ? `https://places.googleapis.com/v1/${res.photo_name}/media?key=${apiKey}&maxHeightPx=400`
-                : null,
-            // 修正：100% 精準的地圖導航連結
-            map_query: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.name)}&query_place_id=${res.place_id}`
-        }));
-    } catch (e) {
-        console.error("JSON 解析失敗:", e);
-        throw new Error("AI 回傳資料格式異常，請重試一次。");
-    }
+    const list = JSON.parse(result.candidates[0].content.parts[0].text);
+    
+    return list.map(res => ({
+        ...res,
+        // 有照片才生成 URL
+        photo_url: res.photo_name ? `https://places.googleapis.com/v1/${res.photo_name}/media?key=${apiKey}&maxHeightPx=400` : null,
+        // 100% 精準地圖連結
+        map_query: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.name)}&query_place_id=${res.place_id}`
+    }));
 }
         function renderCards(restaurants) {
     document.getElementById('main-ui').classList.add('blur-mode');
