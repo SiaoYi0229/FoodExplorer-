@@ -27,8 +27,129 @@
         .bg-slide.active { opacity: 0.6; }
 
         #api-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
-        .api-card { width: 100%; max-width: 340px; background: rgba(20, 20, 20, 0.8); border: 1px solid var(--glass-border); border-radius: 24px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        .api-input { width: 100%; background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 15px; color: white; font-size: 1rem; margin-bottom: 15px; text-align: center; }
+/* --- 優化後的 API 設定介面樣式 --- */
+.api-card {
+    width: 100%;
+    max-width: 360px;
+    background: rgba(25, 25, 25, 0.9);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 28px;
+    padding: 35px 25px; /* 增加內邊距 */
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* 讓所有子元素自動產生間隔 */
+}
+
+.api-card h2 {
+    margin: 0 0 5px 0;
+    font-size: 1.6rem;
+    color: var(--primary-orange);
+    letter-spacing: 1px;
+}
+
+#toggle-guide-btn {
+    background: rgba(255, 204, 0, 0.08);
+    border: 1px solid rgba(255, 204, 0, 0.4);
+    color: var(--accent-yellow);
+    padding: 10px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+#api-guide-box {
+    text-align: left;
+    background: rgba(0, 0, 0, 0.3); /* 深色背景區隔 */
+    border-radius: 16px;
+    padding: 20px;
+    margin: 5px 0;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: none;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.guide-steps .step {
+    font-size: 0.85rem;
+    color: #eee;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 12px;
+    line-height: 1.5;
+}
+
+.guide-steps .step:last-child { margin-bottom: 0; }
+
+.guide-steps .step span {
+    background: var(--accent-yellow);
+    color: #000;
+    font-weight: 800;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+}
+
+.api-instruction {
+    text-align: left;
+    font-size: 0.85rem;
+    color: #ccc;
+    margin: 10px 0 5px 5px;
+    font-weight: 600;
+}
+
+.api-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 16px;
+    color: white;
+    font-size: 1rem;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.api-input:focus {
+    border-color: var(--primary-orange);
+    background: rgba(255, 255, 255, 0.12);
+    outline: none;
+}
+
+.api-save-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #FF8533, #FF6600);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 14px;
+    font-weight: bold;
+    font-size: 1.05rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 102, 0, 0.3);
+}
+
+.api-warning {
+    font-size: 0.75rem;
+    color: #ff5555;
+    opacity: 0.9;
+    line-height: 1.4;
+    padding: 0 5px;
+}        .api-input { width: 100%; background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 15px; color: white; font-size: 1rem; margin-bottom: 15px; text-align: center; }
         .api-save-btn { width: 100%; background: var(--primary-orange); color: white; border: none; padding: 14px; border-radius: 12px; font-weight: bold; cursor: pointer; }
         
         #toggle-guide-btn { background: rgba(255, 204, 0, 0.1); border: 1px solid var(--accent-yellow); color: var(--accent-yellow); padding: 8px 15px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; margin-bottom: 15px; width: 100%; }
@@ -150,24 +271,36 @@
 </head>
 <body touch-action="none">
     <div id="api-overlay">
-        <div class="api-card">
-            <h2>🚀 混合模式金鑰設定</h2>
-            <button id="toggle-guide-btn" onclick="toggleApiGuide()">📖 3 分鐘快速申請教學</button>
-            <div id="api-guide-box">
-                <div class="guide-steps">
-                    <div class="step"><span>1</span> 前往 <a href="https://console.cloud.google.com/" target="_blank" style="color:var(--accent-yellow)">GCP 控制台</a> 建立專案。</div>
-                    <div class="step"><span>2</span> 啟用 <b>Places API (New)</b> 與 <b>Generative Language API</b>。</div>
-                    <div class="step"><span>3</span> 建立並複製 <b>AIza...</b> 開頭的金鑰貼在下方。</div>
-                    <div class="step"><span>4</span> 確保已綁定信用卡（Google 每月贈送 $200 額度）。</div>
-                </div>
+    <div class="api-card">
+        <h2>🚀 進階設定</h2>
+        
+        <!-- 申請教學區 -->
+        <button id="toggle-guide-btn" onclick="toggleApiGuide()">📖 3 分鐘快速申請教學</button>
+        
+        <div id="api-guide-box">
+            <div class="guide-steps">
+                <div class="step"><span>1</span> 前往 <a href="https://console.cloud.google.com/" target="_blank" style="color:var(--accent-yellow); text-decoration: underline;">GCP 控制台</a> 建立專案。</div>
+                <div class="step"><span>2</span> 搜尋並「啟用」<b>Places API (New)</b> 與 <b>Generative Language API</b>。</div>
+                <div class="step"><span>3</span> 在「憑證」建立「API 金鑰」並複製 <b>AIza...</b>。</div>
+                <div class="step"><span>4</span> 確保已綁定信用卡（Google 每月贈送 $200 免費額度）。</div>
             </div>
-            <div class="api-instruction">請輸入您的 GCP API 金鑰：</div>
-            <input type="password" id="api-key-input" class="api-input" placeholder="AIzaSy...">
-            <button class="api-save-btn" onclick="saveApiKey()">確認並儲存</button>
-            <div class="api-warning">⚠️ 注意：請勿使用 AI Studio 的金鑰，無法抓取地圖。</div>
-            <button onclick="document.getElementById('api-overlay').style.display='none'" style="background:none; border:none; color:#777; margin-top:15px; cursor:pointer;">返回首頁</button>
         </div>
+
+        <!-- 輸入區 -->
+        <div style="display: flex; flex-direction: column;">
+            <div class="api-instruction">請貼上您的 GCP API 金鑰：</div>
+            <input type="password" id="api-key-input" class="api-input" placeholder="AIzaSyBw...">
+        </div>
+
+        <button class="api-save-btn" onclick="saveApiKey()">儲存設定並開啟探索</button>
+
+        <div class="api-warning">
+            ⚠️ 提醒：AI Studio 的金鑰無法使用地圖功能，請確保使用的是 GCP 金鑰。
+        </div>
+
+        <button onclick="document.getElementById('api-overlay').style.display='none'" style="background:none; border:none; color:#666; margin-top:5px; cursor:pointer; font-size: 0.9rem;">✕ 暫不設定，返回首頁</button>
     </div>
+</div>
 
     <div id="bg-container"></div>
     <!-- 修正：移除重複嵌套，保留主畫面背景 -->
