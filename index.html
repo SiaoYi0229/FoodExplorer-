@@ -602,8 +602,15 @@ async function handleSearchClick() {
             keptRestaurants = []; isFinalOne = false;
             renderCards(finalRecommendations);
         }
-    } catch (e) {
-        alert(e.message);
+    } } catch (e) {
+        console.error(e);
+        let errorMsg = e.message;
+        if (errorMsg.includes("Places API")) {
+            errorMsg = "❌ 地圖權限未開啟！\n請點擊右上角⚙️進入設定，點擊教學中的「Places API」連結並按「啟用」。";
+        } else if (errorMsg.includes("Generative Language")) {
+            errorMsg = "❌ AI 權限未開啟！\n請點擊右上角⚙️進入設定，點擊教學中的「Gemini API」連結並按「啟用」。";
+        }
+        alert(errorMsg);
     } finally {
         if (loaderInterval) clearInterval(loaderInterval);
         loader.style.display = 'none';
