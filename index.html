@@ -694,17 +694,9 @@ async function fetchRealPlaces(apiKey, cfg) {
     }));
 
     const prompt = `你現在是專業美食偵探。
-    使用者座標：(${userCoords.lat || '未知'}, ${userCoords.lng || '未知'})
     需求：想吃「${cfg.food}」、預算「${cfg.budget}」、人數「${cfg.people}」、目的「${cfg.purpose}」。
-    隱藏版優先：${cfg.isHidden ? "是 (優先選評分高但評論數較少的店)" : "否"}
-
-    請從這份真實名單中選出最符合需求的 6 家店：${JSON.stringify(simplifiedList)}
-
-    【任務】：
-    1. 計算每家店與使用者的距離，並輸出格式如 "350m" 或 "1.2km"。
-    2. 針對「${cfg.purpose}」寫出感性的推薦理由。
-    3. 必須保留原始的 place_id, address, photo_name。
-    4. 輸出純 JSON 陣列。欄位：name, rating, review_count, signature, review_summary, reason, place_id, distance, address, photo_name。`;
+    請從名單選出最符合的 6 家店：${JSON.stringify(simplifiedList)}
+    輸出純 JSON 陣列。欄位：name, rating, review_count, signature, review_summary, reason, place_id, distance, address, photo_name。`;
 
     const response = await fetch(url, {
         method: "POST",
@@ -716,17 +708,28 @@ async function fetchRealPlaces(apiKey, cfg) {
     });
 
     const result = await response.json();
-    const recommendations = JSON.parse(result.candidates[0].content.parts[0].text);
-    
-    return recommendations.map(res => ({
-        ...res,
-        photo_url: res.photo_name 
-            ? `https://places.googleapis.com/v1/${res.photo_name}/media?key=${apiKey}&maxHeightPx=400`
-            : `https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400`,
-        map_query: `https://www.google.com/maps/search/?api=1&query_place_id=${res.place_id}`
-    }));
-}
 
+    // --- 關鍵修正：檢查 API 是否回傳錯誤 ---
+    if (result.error) {
+        throw new Error(`AI 服務報錯: ${result.error.message}`);
+    }
+    if (!result.candidates || !result.candidates[0].content.parts) {
+        throw new Error("AI 無法產生推薦，請確保您的 API Key 已啟用 'Generative Language API'。");
+    }
+
+    try {
+        const recommendations = JSON.parse(result.candidates[0].content.parts[0].text);
+        return recommendations.map(res => ({
+            ...res,
+            photo_url: res.photo_name 
+                ? `https://places.googleapis.com/v1/${res.photo_name}/media?key=${apiKey}&maxHeightPx=400`
+                : null, // 如果沒照片就給 null
+            map_query: `https://www.google.com/maps/search/?api=1&query_place_id=${res.place_id}`
+        }));
+    } catch (e) {
+        throw new Error("AI 回傳格式有誤，請再試一次。");
+    }
+}
         function renderCards(restaurants) {
             document.getElementById('main-ui').classList.add('blur-mode');
             const stack = document.getElementById('card-stack'); stack.innerHTML = ''; 
@@ -735,13 +738,14 @@ async function fetchRealPlaces(apiKey, cfg) {
             restaurants.forEach((res) => {
                 const wrapper = document.createElement('div'); wrapper.className = 'swipe-card-wrapper';
                 const card = document.createElement('div'); card.className = 'swipe-card';
-                card.innerHTML = `
+                // --- 修正後的卡片 HTML (確保有照片才顯示，且不重複) ---
+card.innerHTML = `
     <div class="swipe-hints"><div class="hint-item">← NOPE</div><div class="hint-item">LIKE →</div></div>
     <div class="swipe-label label-like">LIKE</div><div class="swipe-label label-nope">NOPE</div>
     <div class="label-chosen">🏆 最終首選</div>
     
     ${res.photo_url ? `
-    <div style="width:100%; height:160px; border-radius:14px; overflow:hidden; margin-bottom:12px;">
+    <div style="width:100%; height:170px; border-radius:14px; overflow:hidden; margin-bottom:12px; background:#000;">
         <img src="${res.photo_url}" style="width:100%; height:100%; object-fit:cover;">
     </div>` : ''}
 
