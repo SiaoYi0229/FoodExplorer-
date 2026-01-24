@@ -79,6 +79,88 @@
         #loader { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); }
         .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,102,0,0.1); border-top: 5px solid var(--primary-orange); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        /* 劫盜地圖 Loader 樣式 */
+#loader {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 10000;
+    background: radial-gradient(circle, #2c1e14 0%, #000 100%);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.map-parchment {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 腳印樣式 */
+.footprints-container {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin-bottom: 30px;
+}
+
+.footprint {
+    position: absolute;
+    width: 20px;
+    height: 10px;
+    background: #4a2e19; /* 墨水棕色 */
+    border-radius: 50% 50% 40% 40%;
+    opacity: 0;
+    filter: blur(1px);
+}
+
+/* 腳印走動動畫 */
+.footprint.left { animation: walk-left 2s infinite; }
+.footprint.right { animation: walk-right 2s infinite; animation-delay: 1s; }
+
+@keyframes walk-left {
+    0% { transform: translate(0, 0) rotate(-20deg); opacity: 0; }
+    20% { opacity: 0.8; }
+    80% { transform: translate(-20px, -40px) rotate(-20deg); opacity: 0; }
+    100% { opacity: 0; }
+}
+
+@keyframes walk-right {
+    0% { transform: translate(20px, -10px) rotate(20deg); opacity: 0; }
+    20% { opacity: 0.8; }
+    80% { transform: translate(40px, -50px) rotate(20deg); opacity: 0; }
+    100% { opacity: 0; }
+}
+
+/* 魔法字體感 */
+.marauders-text {
+    color: #8b5a2b;
+    font-family: "Apple Chancery", cursive, serif;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    text-shadow: 0 0 5px rgba(0,0,0,0.5);
+    margin-top: 20px;
+    letter-spacing: 1px;
+    min-height: 2em;
+    transition: opacity 0.5s ease;
+}
+
+/* 墨水污漬裝飾 */
+.ink-stain {
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(74, 46, 25, 0.2) 0%, transparent 70%);
+    z-index: -1;
+    filter: contrast(150%);
+}
     </style>
 </head>
 <body touch-action="none">
@@ -111,8 +193,18 @@
 </div>
 
     <div id="bg-container"></div>
-    <div id="loader"><div class="spinner"></div><p style="color:white; margin-top:15px; font-weight:bold;">正在巷弄探索中...</p></div>
-
+    div id="loader">
+    <div class="map-parchment">
+        <!-- 腳印動畫容器 -->
+        <div class="footprints-container">
+            <div class="footprint left"></div>
+            <div class="footprint right"></div>
+        </div>
+        <!-- 魔法文字提示 -->
+        <p id="loader-text" class="marauders-text">我在此莊嚴宣誓，我不安好心...</p>
+        <div class="ink-stain"></div>
+    </div>
+</div>
     <div class="container" id="main-ui">
         <div class="header">
             <div class="logo">TasteExplorer</div>
@@ -386,53 +478,57 @@ const mrtLinesTaipei = {
             startSearch();
         }
 
-        async function startSearch() {
+    let loaderInterval;
+
+function updateLoaderText() {
+    const texts = [
+        "正在鎖定城市中的香氣來源...",
+        "追蹤巷弄深處的美味足跡...",
+        "正在調閱資深老饕的秘密檔案...",
+        "過濾掉喧囂，尋找靈魂料理...",
+        "排除連鎖店訊號干擾中...",
+        "偵查結束，美味座標已解鎖！"
+    ];
+    let i = 0;
+    const textElem = document.getElementById('loader-text');
+    
+    // 每 2 秒換一次文案
+    loaderInterval = setInterval(() => {
+        textElem.style.opacity = 0;
+        setTimeout(() => {
+            i = (i + 1) % texts.length;
+            textElem.innerText = texts[i];
+            textElem.style.opacity = 1;
+        }, 500);
+    }, 2500);
+}
+
+        // 修改原本的 startSearch 函式
+async function startSearch() {
     const loader = document.getElementById('loader');
     const btn = document.getElementById('search-btn');
     const apiKey = getStoredKey();
     
     loader.style.display = 'flex';
+    updateLoaderText(); // 啟動腳印地圖文字
     btn.disabled = true;
 
-    // 收集使用者需求
-    const config = {
-        food: document.getElementById('food').options[document.getElementById('food').selectedIndex].text,
-        budget: document.getElementById('budget').value, // low, mid, high, luxury
-        purpose: document.getElementById('purpose').value,
-        city: document.getElementById('city').options[document.getElementById('city').selectedIndex].text,
-        district: document.getElementById('district').value,
-        station: document.getElementById('mrt-station').value,
-        transport: document.getElementById('transport').value,
-        isHidden: document.getElementById('btn-hidden').classList.contains('selected'),
-        isOpenOnly: document.getElementById('btn-open').classList.contains('selected')
-    };
-
     try {
-        // --- 第一階段：向 Google Places API 抓取真實名單 ---
+        // ... (原本的兩段式 API 邏輯) ...
         const rawPlaces = await fetchRealPlaces(apiKey, config);
-        
-        if (!rawPlaces || rawPlaces.length === 0) {
-            throw new Error("在該區域找不到符合條件的真實餐廳，請擴大範圍。");
-        }
-
-        // --- 第二階段：將真實名單交給 Gemini 進行推薦與文案包裝 ---
         const finalRecommendations = await getAiRanking(apiKey, config, rawPlaces);
-
-        if (finalRecommendations && finalRecommendations.length > 0) {
-            incrementUsage();
-            keptRestaurants = []; 
-            isFinalOne = false;
-            renderCards(finalRecommendations);
+        
+        if (finalRecommendations) {
+            // ... 渲染結果 ...
         }
     } catch (e) {
-        alert(e.message || "探索失敗，請檢查 API Key 權限或網路連線。");
-        console.error(e);
+        alert(e.message);
     } finally {
+        clearInterval(loaderInterval); // 停止文字切換
         loader.style.display = 'none'; 
         btn.disabled = false;
     }
 }
-
     async function fetchRealPlaces(apiKey, cfg) {
     let query = `${cfg.city} ${cfg.district} ${cfg.food}`;
     if (cfg.transport !== 'none' && cfg.station) query = `${cfg.station}附近 ${cfg.food}`;
