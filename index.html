@@ -170,7 +170,7 @@
     </div>
 
     <div id="bg-container"></div>
-    <!-- 修正後的 Loader 結構 -->
+    <!-- 修正：移除重複嵌套，保留主畫面背景 -->
     <div id="loader">
         <div class="iris-container">
             <div class="iris-ring"></div>
@@ -178,7 +178,7 @@
             <div class="iris-ring"></div>
             <div class="iris-center"></div>
         </div>
-        <p id="loader-text" class="loader-text">正在巷弄探索中...</p>
+        <p id="loader-text" class="loader-text">正在定位您的座標...</p>
     </div>
     </div>
 
@@ -440,10 +440,27 @@ const mrtLinesTaipei = {
         function incrementUsage() { const today = new Date().toDateString(); const keyId = btoa(getStoredKey()).slice(-10); const count = getUsageCount() + 1; localStorage.setItem('USAGE_'+keyId, JSON.stringify({date: today, count: count})); updateUsageDisplay(); }
         function updateUsageDisplay() { const count = getUsageCount(); document.getElementById('usage-text').innerText = `今日剩餘次數：${DAILY_LIMIT - count} 次`; }
 
-        async function handleSearchClick() {
-            if (!getStoredKey()) { document.getElementById('api-overlay').style.display = 'flex'; return; }
-            if (getUsageCount() >= DAILY_LIMIT) { alert("🚫 今日次數已滿。"); return; }
-            // --- 修正後的搜尋按鈕觸發邏輯 ---
+       async function handleSearchClick() {
+    const apiKey = getStoredKey();
+    if (!apiKey) { document.getElementById('api-overlay').style.display = 'flex'; return; }
+    if (getUsageCount() >= DAILY_LIMIT) { alert("🚫 今日次數已滿。"); return; }
+
+    // --- 關鍵修正：先封裝所有輸入數據 ---
+    const config = {
+        city: document.getElementById('city').value,
+        cityName: document.getElementById('city').options[document.getElementById('city').selectedIndex].text,
+        district: document.getElementById('district').value,
+        transport: document.getElementById('transport').value,
+        food: document.getElementById('food').options[document.getElementById('food').selectedIndex].text,
+        people: document.getElementById('people').value,
+        purpose: document.getElementById('purpose').options[document.getElementById('purpose').selectedIndex].text,
+        budget: document.getElementById('budget').options[document.getElementById('budget').selectedIndex].text,
+        station: document.getElementById('mrt-station').value,
+        isHidden: document.getElementById('btn-hidden').classList.contains('selected'),
+        isOpenOnly: document.getElementById('btn-open').classList.contains('selected')
+    };
+
+    // --- 進行交通驗證 (使用封裝好的 config) ---
     if (!isNearbyMode) {
         const hasMRT = ['Taipei', 'NewTaipei', 'Taoyuan', 'Taichung', 'Kaohsiung'];
         const hasHSR = ['Taipei', 'NewTaipei', 'Taoyuan', 'HsinchuCounty', 'Miaoli', 'Taichung', 'Changhua', 'Yunlin', 'ChiayiCounty', 'Tainan', 'Kaohsiung'];
@@ -454,11 +471,11 @@ const mrtLinesTaipei = {
         if (config.transport === 'airport' && !hasAirport.includes(config.city)) { alert(`⚠️ ${config.cityName} 目前沒有機場。`); return; }
     }
     
-    // 關鍵：必須把 config 傳給 startSearch 函式
+    // 傳入資料開始搜尋
     startSearch(apiKey, config);
 }
 
-      // --- 修正後的文字切換函式 (補齊斜線) ---
+      // --- 關鍵修正：補齊斜線，確保函式可執行 ---
 function updateLoaderText(stage) {
     const textElem = document.getElementById('loader-text');
     const texts = [
@@ -477,30 +494,26 @@ function updateLoaderText(stage) {
 }
 
       
-        // --- 3. 執行搜尋與 API 串接 ---
-async function startSearch(apiKey, config) {
+        async function startSearch(apiKey, config) {
     const loader = document.getElementById('loader');
     const btn = document.getElementById('search-btn');
     
     loader.style.display = 'flex';
-    updateLoaderText(0); // 階段 0
+    updateLoaderText(0); 
     btn.disabled = true;
 
     try {
-        // 第二階段：Google 數據 (處理範圍限制)
-        updateLoaderText(1); // 階段 1
+        updateLoaderText(1);
         const rawPlaces = await fetchRealPlaces(apiKey, config);
         
         if (!rawPlaces || rawPlaces.length === 0) {
-            throw new Error("在該區域找不到符合條件的店家，請嘗試放寬過濾條件。");
+            throw new Error("在該區域找不到符合條件的店家，請放寬搜尋條件。");
         }
 
-        // 第三階段：AI 加工
-        updateLoaderText(2); // 階段 2
-        // 等待一下模擬過濾感，視覺效果更好
-        await new Promise(r => setTimeout(r, 800));
+        updateLoaderText(stage = 2); 
+        await new Promise(r => setTimeout(r, 600)); // 視覺緩衝
         
-        updateLoaderText(3); // 階段 3
+        updateLoaderText(3);
         const finalRecommendations = await getAiRanking(apiKey, config, rawPlaces);
 
         if (finalRecommendations && finalRecommendations.length > 0) {
@@ -511,6 +524,7 @@ async function startSearch(apiKey, config) {
     } catch (e) {
         alert(e.message);
     } finally {
+        if (loaderInterval) clearInterval(loaderInterval);
         loader.style.display = 'none';
         btn.disabled = false;
     }
