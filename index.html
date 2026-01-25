@@ -147,7 +147,7 @@
         <p style="font-size: 0.85rem; color: #888; margin-top: -10px;">請依照下方引導開啟 Google 雲端權限</p>
         <button id="toggle-guide-btn" onclick="toggleApiGuide()">📖 查看快速申請教學 (建議首次使用閱讀)</button>
         <div id="api-guide-box">
-    <div class="guide-content-wrapper">
+    <div class="guide-steps-container">
         <!-- 步驟 1 -->
         <div class="step-item">
             <div class="step-title"><span class="step-num">1</span> 建立雲端專案</div>
@@ -156,8 +156,8 @@
 
         <!-- 步驟 2 -->
         <div class="step-item">
-            <div class="step-title"><span class="step-num">2</span> 啟用必要 API</div>
-            <div class="api-tag-container" style="margin: 5px 0 0 0;">
+            <div class="step-title"><span class="step-num">2</span> 啟用必要 API 權限</div>
+            <div class="api-tag-container">
                 <a href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank" class="api-tag" style="text-decoration: none;">
                     <span class="api-tag-name">Places API</span>
                     <span class="api-tag-desc">獲取地圖數據</span>
@@ -167,15 +167,22 @@
                     <span class="api-tag-desc">生成推薦理由</span>
                 </a>
             </div>
-            <p class="step-desc">* 記得也要搜尋並啟用 <b>Routes API</b> 以計算走路距離。</p>
+            <!-- 補上 Routes API 提示 -->
+            <p style="font-size: 0.75rem; color: #999; margin: 0 0 0 5px;">* 建議同時啟用 <b>Routes API</b> 以獲得精確距離。</p>
         </div>
 
         <!-- 步驟 3 -->
         <div class="step-item">
-            <div class="step-title"><span class="step-num">3</span> 啟用結算帳戶</div>
-            <p class="step-desc">
-                請至 GCP 「結算」分頁<b>綁定信用卡</b>。<br>
-                <span style="color: #ff6666;">未綁定者，API 將無法回傳任何資料。</span>
+            <div class="step-title"><span class="step-num">3</span> 產生 API 金鑰 (Key)</div>
+            <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="step-link-btn">建立憑證並複製金鑰 ➔</a>
+        </div>
+
+        <!-- 步驟 4 (原本被刪除的部分，現在補回) -->
+        <div class="step-item">
+            <div class="step-title"><span class="step-num">4</span> 啟用結算帳戶</div>
+            <p style="font-size: 0.75rem; color: #aaa; margin: 5px 0 0 5px; line-height: 1.4;">
+                請於 GCP 側邊選單進入「結算」並<b>綁定信用卡</b>。<br>
+                <span style="color: #ff6666;">*未綁定者，地圖功能將無法回傳資料。</span>
             </p>
         </div>
     </div>
