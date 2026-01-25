@@ -460,44 +460,7 @@
         }
     }, 7000); // <--- 已從 10000 改為 5000
 }
-       async function handleSearchClick() {
-    const apiKey = getStoredKey();
-    if (!apiKey) { document.getElementById('api-overlay').style.display = 'flex'; return; }
-    
-    // 取得所有輸入狀態 (不刪除任何欄位)
-    const config = {
-        city: document.getElementById('city').value,
-        cityName: document.getElementById('city').options[document.getElementById('city').selectedIndex].text,
-        district: document.getElementById('district').value,
-        transport: document.getElementById('transport').value,
-        food: document.getElementById('food').options[document.getElementById('food').selectedIndex].text,
-        people: document.getElementById('people').value,
-        purpose: document.getElementById('purpose').options[document.getElementById('purpose').selectedIndex].text,
-        budget: document.getElementById('budget').options[document.getElementById('budget').selectedIndex].text,
-        station: document.getElementById('mrt-station').value,
-        isHidden: document.getElementById('btn-hidden').classList.contains('selected'),
-        isOpenOnly: document.getElementById('btn-open').classList.contains('selected')
-    };
-
-    if (getUsageCount() >= DAILY_LIMIT) { alert("🚫 今日探索次數已滿。"); return; }
-    startSearch(apiKey, config);
-}
-
-
-
-    // 恢復您第一份的嚴格驗證邏輯
-     if (!isNearbyMode) {
-                const cityKey = document.getElementById('city').value;
-                const cityName = document.getElementById('city').options[document.getElementById('city').selectedIndex].text;
-                const transport = document.getElementById('transport').value;
-                const hasMRT = ['Taipei', 'NewTaipei', 'Taoyuan', 'Taichung', 'Kaohsiung'];
-                const hasHSR = ['Taipei', 'NewTaipei', 'Taoyuan', 'HsinchuCounty', 'Miaoli', 'Taichung', 'Changhua', 'Yunlin', 'ChiayiCounty', 'Tainan', 'Kaohsiung'];
-                const hasAirport = ['Taipei', 'Taoyuan', 'Taichung', 'Tainan', 'Kaohsiung', 'ChiayiCounty', 'Hualien', 'Taitung', 'Penghu', 'Kinmen', 'Lienchiang'];
-                if (transport === 'mrt' && !hasMRT.includes(cityKey)) { alert(`⚠️ ${cityName} 目前沒有捷運。`); return; }
-                if (transport === 'hsr' && !hasHSR.includes(cityKey)) { alert(`⚠️ ${cityName} 目前沒有高鐵。`); return; }
-                if (transport === 'airport' && !hasAirport.includes(cityKey)) { alert(`⚠️ ${cityName} 目前沒有機場。`); return; }
-            }
-    startSearch(apiKey, config);
+       
 }async function handleSearchClick() {
     const apiKey = getStoredKey();
     if (!apiKey) { document.getElementById('api-overlay').style.display = 'flex'; return; }
