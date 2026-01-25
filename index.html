@@ -887,8 +887,20 @@ function updateLoaderText(stage) {
             },{passive:false});
             card.addEventListener('touchend',()=>{
                 if(isScrolling)return; card.style.transition='0.4s cubic-bezier(0.175,0.885,0.32,1.275)';
-                if(currentX>120){ if(isFinalOne){ card.style.transform='scale(1.02)'; card.querySelector('.label-chosen').classList.add('active'); }else{ keptRestaurants.push(res); card.style.transform='translateX(1000px) rotate(30deg)'; card.style.opacity='0'; checkStackEnd(wrapper); } }
-                else if(currentX<-120){ card.style.transform='translateX(-1000px) rotate(-30deg)'; card.style.opacity='0'; checkStackEnd(wrapper); }
+if (currentX > 120) {
+    if (isFinalOne) { // 最後一張，蓋章鎖死
+        card.style.transform = `scale(1.02) rotate(0deg)`;
+        card.classList.add('stamped');
+        card.querySelector('.label-chosen').classList.add('active');
+        // 關鍵：蓋章時強制隱藏 LIKE 標籤
+        card.querySelector('.label-like').style.opacity = 0; 
+    } else { // 晉級下一輪
+        keptRestaurants.push(res);
+        card.style.transform = `translateX(1000px) rotate(30deg)`;
+        card.style.opacity = '0';
+        checkStackEnd(wrapper);
+    }
+}                else if(currentX<-120){ card.style.transform='translateX(-1000px) rotate(-30deg)'; card.style.opacity='0'; checkStackEnd(wrapper); }
                 else { card.style.transform=''; card.querySelector('.label-like').style.opacity=0; card.querySelector('.label-nope').style.opacity=0; }
                 currentX=0;
             });
