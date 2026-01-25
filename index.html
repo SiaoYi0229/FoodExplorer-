@@ -322,6 +322,40 @@
         card-photo-container {width: 100%; height: 220px; /* 增加高度，不再是一小條 */border-radius: 16px; overflow: hidden; margin-bottom: 15px; background: #000; border: 1px solid rgba(255,255,255,0.1)}
         .card-photo-container img {width: 100%; height: 100%; object-fit: cover; /* 確保照片填滿且不變形 */}
         .close-swiper { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 12px 40px; border-radius: 50px; cursor: pointer; font-weight: bold; backdrop-filter: blur(10px); margin: 20px 0 40px 0; flex-shrink: 0; }
+        .card-photo-container {
+    width: 100%; height: 200px; 
+    border-radius: 18px; overflow: hidden; margin-bottom: 15px; 
+    background: #111; border: 1px solid rgba(255,255,255,0.1);
+}
+.card-photo-container img { width: 100%; height: 100%; object-fit: cover; }
+
+.card-title { font-size: 1.4rem; font-weight: 800; margin: 0 0 10px 0; color: #fff; line-height: 1.3; }
+
+/* 資訊網格：排列評分、距離、價格、時間 */
+.card-meta-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;
+}
+.meta-item {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 10px; border-radius: 10px;
+    font-size: 0.75rem; font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+    color: #eee; border: 1px solid rgba(255,255,255,0.05);
+}
+.meta-item i { color: var(--accent-yellow); font-style: normal; }
+.meta-price { color: var(--accent-yellow); border-color: rgba(255, 204, 0, 0.2); }
+.meta-dist { background: rgba(255, 102, 0, 0.1); color: var(--primary-orange); }
+
+.info-section { margin-bottom: 12px; }
+.info-label { color: var(--primary-orange); font-weight: 800; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 2px; display: block; letter-spacing: 1px; }
+.info-text { color: #ccc; font-size: 0.85rem; line-height: 1.4; }
+
+.card-summary-box {
+    background: rgba(255, 102, 0, 0.05);
+    border-left: 3px solid var(--primary-orange);
+    padding: 10px 12px; border-radius: 0 12px 12px 0;
+    font-size: 0.88rem; font-style: italic; color: #ddd; margin: 15px 0;
+}
     </style>
 </head>
 <body touch-action="none">
@@ -790,24 +824,27 @@ function updateLoaderText(stage) {
 }
 
         async function getAiRanking(apiKey, cfg, rawPlaces) {
-    // 使用目前最穩定的 flash 模型
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     const simplifiedList = rawPlaces.map(p => ({
         name: p.displayName.text,
         rating: p.rating,
         reviews: p.userRatingCount,
-        price_level: p.priceLevel,
         address: p.formattedAddress,
         place_id: p.id,
+        price_level: p.priceLevel,
         photo_name: p.photos && p.photos.length > 0 ? p.photos[0].name : null,
         lat: p.location.latitude,
         lng: p.location.longitude
     }));
 
-    const prompt = `你是專業美食偵探。從名單選出最符「${cfg.food}」、預算「${cfg.budget}」、人數「${cfg.people}」、目的「${cfg.purpose}」的 6 家店：${JSON.stringify(simplifiedList)}。
-    任務：1.計算距離(如"300m") 2.針對${cfg.purpose}寫理由 3.寫招牌菜。
-    輸出純 JSON 陣列。欄位：name, rating, review_count,price, signature, opening_hours,review_summary, reason, place_id, distance, address, photo_name。`;
+    const prompt = `你現在是美食專家。請從名單挑選符合「${cfg.food}」與「${cfg.purpose}」的 6 家店：${JSON.stringify(simplifiedList)}
+    【任務】：
+    1. 計算距離 (如 "450m")。
+    2. 根據 price_level (0-4) 估算台幣價格區間並輸出格式為 "$xxx ~ $xxxx"。
+    3. 獲取店家目前的營業狀態或時間。
+    4. 保留 place_id 與 photo_name。
+    輸出純 JSON 陣列。欄位：name, rating, review_count, signature, opening_hours, price, review_summary, reason, place_id, distance, address, photo_name。`;
 
     const response = await fetch(url, {
         method: "POST",
@@ -819,19 +856,17 @@ function updateLoaderText(stage) {
     });
 
     const result = await response.json();
-    if (!result.candidates) throw new Error("AI Candidates undefined - 請檢查 Gemini API 權限。");
-
     const list = JSON.parse(result.candidates[0].content.parts[0].text);
     
     return list.map(res => ({
         ...res,
-        // 有照片才生成 URL
-        photo_url: res.photo_name ? `https://places.googleapis.com/v1/${res.photo_name}/media?key=${apiKey}&maxHeightPx=400` : null,
-        // 100% 精準地圖連結
+        photo_url: res.photo_name ? `https://places.googleapis.com/v1/${res.photo_name}/media?key=${apiKey}&maxHeightPx=600` : null,
         map_query: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.name)}&query_place_id=${res.place_id}`
     }));
 }
-        function renderCards(restaurants) {
+        
+        // --- 修改後的卡片渲染函式 ---
+function renderCards(restaurants) {
     document.getElementById('main-ui').classList.add('blur-mode');
     const stack = document.getElementById('card-stack'); 
     stack.innerHTML = ''; 
@@ -848,27 +883,37 @@ function updateLoaderText(stage) {
             <div class="swipe-label label-nope">NOPE</div>
             <div class="label-chosen">🏆 最終首選</div>
 
-            ${res.photo_url ? `
-                <div class="card-photo-container">
-                    <img src="${res.photo_url}">
-                </div>` : ''}
+            ${res.photo_url ? `<div class="card-photo-container"><img src="${res.photo_url}"></div>` : ''}
 
-            <h3 style="margin:0;">${res.name}</h3>
-            <div class="card-badges">
-                <span class="card-badge badge-rating">⭐ ${res.rating} (${res.review_count})</span>
-                <span class="card-badge badge-distance">📍 距離 ${res.distance}</span>
+            <h3 class="card-title">${res.name}</h3>
+            
+            <div class="card-meta-grid">
+                <div class="meta-item">⭐ <i>${res.rating}</i> (${res.review_count})</div>
+                <div class="meta-item meta-dist">📍 距離 ${res.distance}</div>
+                <div class="meta-item meta-price">💰 ${res.price || '價格不詳'}</div>
+                <div class="meta-item">🕒 ${res.opening_hours || '詳情請見地圖'}</div>
             </div>
-            <div style="font-size:0.75rem;color:#aaa;margin-bottom:10px;">🏠 ${res.address}</div>
-            <div class="info-row"><span class="info-label">🔥 招牌</span><span>${res.signature}</span></div>
-            <div class="card-summary">"${res.review_summary}"</div>
-            <div class="info-row" style="margin-top:5px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
-                <span class="info-label">💡 推薦理由</span><span style="color:var(--accent-yellow)">${res.reason}</span>
+
+            <div class="info-section">
+                <span class="info-label">🏠 真實地址</span>
+                <span class="info-text">${res.address}</span>
             </div>
-            <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 打開地圖</a>
+
+            <div class="info-section">
+                <span class="info-label">🔥 必點招牌</span>
+                <span class="info-text">${res.signature}</span>
+            </div>
+
+            <div class="card-summary-box">"${res.review_summary}"</div>
+
+            <div class="info-section" style="border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">
+                <span class="info-label">💡 推薦原因</span>
+                <span class="info-text" style="color:var(--accent-yellow)">${res.reason}</span>
+            </div>
+
+            <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 打開地圖查看詳情</a>
         `;
-        
-        wrapper.appendChild(card); 
-        stack.insertBefore(wrapper, stack.firstChild); 
+        wrapper.appendChild(card); stack.insertBefore(wrapper, stack.firstChild); 
         initSwipe(card, wrapper, res);
     });
     
@@ -877,34 +922,48 @@ function updateLoaderText(stage) {
     closeBtn.onclick = resetUI; stack.appendChild(closeBtn);
 }
 
-        function initSwipe(card, wrapper, res) {
-            let startX=0,startY=0,currentX=0,isScrolling=false;
-            card.addEventListener('touchstart',e=>{startX=e.touches[0].clientX;startY=e.touches[0].clientY;card.style.transition='none';isScrolling=false;},{passive:true});
-            card.addEventListener('touchmove',e=>{
-                currentX=e.touches[0].clientX-startX; let currentY=e.touches[0].clientY-startY;
-                if(!isScrolling && Math.abs(currentY)>Math.abs(currentX)) isScrolling=true;
-                if(!isScrolling) { if(e.cancelable)e.preventDefault(); card.style.transform=`translateX(${currentX}px) rotate(${currentX/15}deg)`; card.querySelector('.label-like').style.opacity=currentX>50?Math.min(currentX/150,1):0; card.querySelector('.label-nope').style.opacity=currentX<-50?Math.min(Math.abs(currentX)/150,1):0; }
-            },{passive:false});
-            card.addEventListener('touchend',()=>{
-                if(isScrolling)return; card.style.transition='0.4s cubic-bezier(0.175,0.885,0.32,1.275)';
-if (currentX > 120) {
-    if (isFinalOne) { // 最後一張，蓋章鎖死
-        card.style.transform = `scale(1.02) rotate(0deg)`;
-        card.classList.add('stamped');
-        card.querySelector('.label-chosen').classList.add('active');
-        // 關鍵：蓋章時強制隱藏 LIKE 標籤
-        card.querySelector('.label-like').style.opacity = 0; 
-    } else { // 晉級下一輪
-        keptRestaurants.push(res);
-        card.style.transform = `translateX(1000px) rotate(30deg)`;
-        card.style.opacity = '0';
-        checkStackEnd(wrapper);
-    }
-}                else if(currentX<-120){ card.style.transform='translateX(-1000px) rotate(-30deg)'; card.style.opacity='0'; checkStackEnd(wrapper); }
-                else { card.style.transform=''; card.querySelector('.label-like').style.opacity=0; card.querySelector('.label-nope').style.opacity=0; }
-                currentX=0;
-            });
+// --- 修改後的滑動邏輯 (修正蓋章時 LIKE 消失) ---
+function initSwipe(card, wrapper, res) {
+    let startX=0, startY=0, currentX=0, isScrolling=false;
+    card.addEventListener('touchstart', e => { startX=e.touches[0].clientX; startY=e.touches[0].clientY; card.style.transition='none'; isScrolling=false; }, {passive:true});
+    card.addEventListener('touchmove', e => {
+        currentX = e.touches[0].clientX - startX;
+        let currentY = e.touches[0].clientY - startY;
+        if (!isScrolling && Math.abs(currentY) > Math.abs(currentX)) isScrolling = true;
+        if (!isScrolling) {
+            if (e.cancelable) e.preventDefault();
+            card.style.transform = `translateX(${currentX}px) rotate(${currentX/15}deg)`;
+            card.querySelector('.label-like').style.opacity = currentX > 50 ? Math.min(currentX/150, 1) : 0;
+            card.querySelector('.label-nope').style.opacity = currentX < -50 ? Math.min(Math.abs(currentX)/150, 1) : 0;
         }
+    }, {passive:false});
+    card.addEventListener('touchend', () => {
+        if (isScrolling) return;
+        card.style.transition = '0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        if (currentX > 120) {
+            if (isFinalOne) {
+                card.style.transform = `scale(1.02) rotate(0deg)`;
+                card.classList.add('stamped');
+                card.querySelector('.label-chosen').classList.add('active');
+                card.querySelector('.label-like').style.opacity = 0; // 蓋章時 LIKE 標籤消失
+            } else {
+                keptRestaurants.push(res);
+                card.style.transform = `translateX(1000px) rotate(30deg)`;
+                card.style.opacity = '0';
+                checkStackEnd(wrapper);
+            }
+        } else if (currentX < -120) {
+            card.style.transform = `translateX(-1000px) rotate(-30deg)`;
+            card.style.opacity = '0';
+            checkStackEnd(wrapper);
+        } else {
+            card.style.transform = '';
+            card.querySelector('.label-like').style.opacity = 0;
+            card.querySelector('.label-nope').style.opacity = 0;
+        }
+        currentX = 0;
+    });
+}
 
         function checkStackEnd(wrapper) { setTimeout(()=>{ wrapper.remove(); if(document.querySelectorAll('.swipe-card-wrapper').length===0){ if(keptRestaurants.length===0){ resetUI(); }else{ renderCards([...keptRestaurants]); keptRestaurants=[]; } } },400); }
         function resetUI(){ document.getElementById('swiper-overlay').style.display='none'; document.getElementById('main-ui').classList.remove('blur-mode'); keptRestaurants=[]; }
