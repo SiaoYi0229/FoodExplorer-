@@ -789,7 +789,7 @@ function runTypingEffect() {
 }
 
 async function getAiRanking(apiKey, cfg, rawPlaces) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const simplifiedList = rawPlaces.map(p => {
         // --- 修正：前端直接算物理距離，解決 AI 亂猜距離的問題 ---
