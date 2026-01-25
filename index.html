@@ -24,109 +24,43 @@
         .bg-slide { position: absolute; width: 100%; height: 100%; background-size: cover; background-position: center; opacity: 0; transition: opacity 1s; }
         .bg-slide.active { opacity: 0.6; }
         #api-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
-       /* --- API 設定介面：唯一整合版 --- */
-        .api-card {
-            background: rgba(20, 20, 20, 0.95) !important;
-            padding: 35px 25px 25px 25px !important;
-            border-radius: 32px !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            display: flex;
-            flex-direction: column;
-            gap: 15px; /* 按鈕間的間距 */
-            width: 100%;
-            max-width: 350px;
-        }
-
-        #api-guide-box {
-            display: none;
-            text-align: left;
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 24px; /* 完整的圓角 */
-            padding: 22px;
-            margin: 10px 0; /* 讓框框與上下按鈕有留白，不被切掉 */
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        /* 教學框內部的平均分配編排 */
-        .guide-content-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 20px; /* 每個步驟之間的平均間距 */
-        }
-
-        .step-item {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .step-title {
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: #eee;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .step-num {
-            background: linear-gradient(135deg, var(--primary-orange), #FF8533);
-            color: #fff;
-            width: 22px; height: 22px;
-            border-radius: 6px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.75rem; font-weight: 800;
-            flex-shrink: 0;
-        }
-
-        .step-link-btn {
-            display: block;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--accent-yellow);
-            padding: 10px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-size: 0.8rem;
-            font-weight: 600;
-            border: 1px solid rgba(255, 204, 0, 0.2);
-            transition: 0.3s;
-        }
-
+       .api-card {padding: 30px 20px !important;gap: 12px !important;}
+        #api-guide-box {text-align: left;background: rgba(255, 255, 255, 0.03);border-radius: 16px;padding: 15px;margin: 5px 0;border: 1px solid rgba(255, 255, 255, 0.1) !important;display: none;}
+        .step-title {font-size: 0.85rem;font-weight: 800;color: var(--accent-yellow);margin-bottom: 8px;display: block;}
+        .step-link-btn {display: inline-block;background: rgba(255, 204, 0, 0.15);color: var(--accent-yellow);padding: 6px 12px;border-radius: 8px;text-decoration: none;font-size: 0.75rem;margin: 5px 0 12px 0;border: 1px solid var(--accent-yellow);}
+        .step-link-btn:hover { background: var(--accent-yellow); color: #000; }
+        .api-tag-container {display: flex;gap: 8px;margin-bottom: 12px;}
+        .api-tag {flex: 1;background: rgba(0, 0, 0, 0.4);padding: 8px;border-radius: 10px;text-align: center;border: 1px solid rgba(255, 255, 255, 0.1);}
+        .api-card {background: rgba(20, 20, 20, 0.95) !important;padding: 40px 28px 25px 28px !important;border-radius: 32px !important;border: 1px solid rgba(255, 255, 255, 0.08) !important;gap: 15px !important; }
+        #api-guide-box {text-align: left;background: rgba(0, 0, 0, 0.4);border-radius: 20px;padding: 24px;margin: 10px 0;border: 1px solid rgba(255, 255, 255, 0.05) !important;display: none;box-shadow: inset 0 0 20px rgba(0,0,0,0.5);}
+        .step-title {font-size: 0.9rem;font-weight: 700;color: #eee;margin-bottom: 8px;display: flex;align-items: center;gap: 10px;}
+        .step-num {background: linear-gradient(135deg, var(--primary-orange), #FF8533);color: #fff;width: 22px; height: 22px;border-radius: 6px;display: flex; align-items: center; justify-content: center;font-size: 0.75rem; font-weight: 800;}
+        .step-link-btn {display: block;text-align: center;background: rgba(255, 255, 255, 0.05);color: var(--accent-yellow);padding: 10px;border-radius: 12px;text-decoration: none;font-size: 0.8rem;font-weight: 600;margin: 8px 0 20px 0;border: 1px solid rgba(255, 204, 0, 0.2);transition: all 0.3s;}
         .step-link-btn:hover { background: rgba(255, 204, 0, 0.1); border-color: var(--accent-yellow); }
-
-        .api-tag-container { display: flex; gap: 10px; margin-top: 5px; }
-
-        .api-tag {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.03);
-            padding: 12px 8px;
-            border-radius: 12px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            text-decoration: none;
-        }
-
-        .api-tag-name { display: block; color: var(--accent-yellow); font-size: 0.75rem; font-weight: 800; margin-bottom: 4px; }
-        .api-tag-desc { display: block; color: #888; font-size: 0.65rem; }
-
-        .api-input { 
-            width: 100%; background: var(--input-bg); border: 1px solid var(--glass-border); 
-            border-radius: 12px; padding: 15px; color: white; font-size: 1rem; text-align: center; 
-        }
-
-        .api-save-btn { 
-            width: 100%; background: linear-gradient(135deg, #FF8533, #FF6600); 
-            color: white; border: none; padding: 16px; border-radius: 12px; 
-            font-weight: bold; cursor: pointer; box-shadow: 0 10px 20px rgba(255, 102, 0, 0.2);
-        }
-
-        #toggle-guide-btn { 
-            background: rgba(255, 204, 0, 0.1); border: 1px solid var(--accent-yellow); 
-            color: var(--accent-yellow); padding: 10px; border-radius: 10px; font-size: 0.85rem; cursor: pointer; 
-        }
-
+        .api-tag-container {display: flex; gap: 12px; margin: 15px 0 25px 0;}
+        .api-tag {flex: 1;background: rgba(255, 255, 255, 0.03);padding: 15px 10px;border-radius: 14px;text-align: center;border: 1px solid rgba(255, 255, 255, 0.05);transition: 0.3s;}
+        .api-tag-name {display: block;color: var(--accent-yellow);font-size: 0.75rem;font-weight: 800;margin-bottom: 6px;letter-spacing: 0.5px;}
+        .api-tag-desc {display: block;color: #888;font-size: 0.65rem;line-height: 1.3;}
+        .api-instruction {font-size: 0.9rem;color: #fff;font-weight: 600;margin-bottom: 12px;text-align: left;padding-left: 5px;}
+        .api-save-btn {margin-top: 10px;background: linear-gradient(135deg, #FF8533, #FF6600) !important;height: 55px;font-size: 1.1rem !important;box-shadow: 0 10px 20px rgba(255, 102, 0, 0.2) !important;}
+        .api-input { width: 100%; background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 15px; color: white; font-size: 1rem; margin-bottom: 15px; text-align: center; }
+        .api-save-btn { width: 100%; background: var(--primary-orange); color: white; border: none; padding: 14px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        #toggle-guide-btn { background: rgba(255, 204, 0, 0.1); border: 1px solid var(--accent-yellow); color: var(--accent-yellow); padding: 8px 15px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; margin-bottom: 15px; width: 100%; }
+        #api-guide-box { text-align: left; background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 15px; margin-bottom: 20px; border-left: 4px solid var(--accent-yellow); display: none; }
+        .guide-steps .step { font-size: 0.8rem; color: #ddd; margin-bottom: 10px; display: flex; gap: 10px; line-height: 1.4; }
+        .guide-steps .step span { background: var(--accent-yellow); color: #000; font-weight: bold; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.7rem; }
+        .api-warning { font-size: 0.75rem; color: #ff4444; margin-top: 10px; opacity: 0.8; text-align: left; }
+        .container { width: 95%; max-width: 357px; height: 100dvh; z-index: 10; display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; padding: 10px 0; position: relative; transition: transform 0.3s ease, filter 0.3s ease; }
+        .container.blur-mode { filter: blur(15px) brightness(0.4); transform: scale(0.95); pointer-events: none; }
+        .header { width: 100%; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; position: relative; }
+        .logo { font-size: 2.77rem; font-weight: 800; color: var(--primary-orange); line-height: 1.1; letter-spacing: -1px; margin: 0; }
+        .tagline { font-size: 1.2rem; color: #ffffff; opacity: 0.8; margin-top: 6px; }
+        .settings-btn { position: absolute; top: 0; right: 0; height: 3rem; display: flex; align-items: center; font-size: 24px; cursor: pointer; z-index: 50; padding: 0 5px; }
+        .glass-card { width: 100%; background: rgba(20, 20, 20, 0.75); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 24px; padding: 18px; border: 1px solid var(--glass-border); flex: 0 0 auto; display: flex; flex-direction: column; gap: 12px; }
+        .location-status { width: 100%; font-size: 0.8rem; color: #fff; background: var(--input-bg); padding: 10px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; cursor: pointer; transition: 0.3s; margin-bottom: 5px; }
+        .location-status.active-mode { background: rgba(255, 204, 0, 0.15) !important; color: var(--accent-yellow) !important; border-color: rgba(255, 204, 0, 0.4); box-shadow: 0 0 15px rgba(255, 204, 0, 0.1); }
+        .location-dot { width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(46, 204, 113, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); } }
         .hide-field { display: none !important; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full-width { grid-column: span 2; }
