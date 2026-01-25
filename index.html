@@ -228,14 +228,22 @@
     50% { border-color: var(--primary-orange); }
 }
         /* 卡片與滑動系統 */
-        #swiper-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; display: none; flex-direction: column; align-items: center; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        .card-stack { width: 100%; max-width: 360px; padding: 30px 0 50px 0; display: flex; flex-direction: column; align-items: center; gap: 25px; }
+#swiper-overlay { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    z-index: 100; display: none; flex-direction: column; align-items: center; 
+    background: radial-gradient(circle at center, rgba(30, 40, 50, 0.6) 0%, rgba(10, 15, 20, 0.85) 100%);
+    backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); 
+    overflow-y: auto; 
+}        .card-stack { width: 100%; max-width: 360px; padding: 30px 0 50px 0; display: flex; flex-direction: column; align-items: center; gap: 25px; }
         .swipe-card-wrapper { width: 92%; flex-shrink: 0; position: relative; transition: transform 0.4s ease, opacity 0.4s ease; touch-action: pan-y; }
         .swipe-card { 
-    width: 100%; background: var(--glass-bg); border-radius: 28px; 
-    border: 1px solid var(--glass-border); padding: 0; /* 改為 0 讓圖片貼邊 */
+    width: 100%; 
+    background: rgba(255, 255, 255, 0.08); 
+    border-radius: 32px; 
+    border: 1px solid rgba(255, 255, 255, 0.15); 
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
     display: flex; flex-direction: column; position: relative; 
-    overflow: hidden; height: auto; /* 高度自動伸長 */
+    overflow: hidden; height: auto;
 }
         .swipe-card::-webkit-scrollbar { display: none; }
 
@@ -250,17 +258,20 @@
         .card-map-btn { background: var(--primary-orange); color: #fff; text-decoration: none; padding: 12px; border-radius: 14px; text-align: center; font-weight: bold; margin-top: 10px; }
          .swipe-hints { position: absolute; top: 12px; left: 0; width: 100%; display: flex; justify-content: space-between; padding: 0 15px; pointer-events: none; z-index: 5; }
         .hint-item { font-size: 0.65rem; font-weight: bold; color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .swipe-label { position: absolute; top: 30px; padding: 5px 15px; border: 4px solid; border-radius: 10px; font-size: 2rem; font-weight: 900; text-transform: uppercase; opacity: 0; pointer-events: none; z-index: 10; }
-        .label-like { right: 20px; color: #2ecc71; border-color: #2ecc71; transform: rotate(15deg); }
-        .label-nope { left: 20px; color: #e74c3c; border-color: #e74c3c; transform: rotate(-15deg); }
+.swipe-label { 
+    position: absolute; top: 40px; /* 稍微往下移 */
+    padding: 5px 15px; border: 4px solid; border-radius: 12px; 
+    font-size: 2.2rem; font-weight: 900; text-transform: uppercase; 
+    opacity: 0; pointer-events: none; z-index: 110; }
+        .label-like { right: 25px; color: #2ecc71; border-color: #2ecc71; transform: rotate(15deg); text-shadow: 0 0 10px rgba(46,204,113,0.5); }
+        .label-nope { left: 25px; color: #e74c3c; border-color: #e74c3c; transform: rotate(-15deg); text-shadow: 0 0 10px rgba(231,76,60,0.5); }
         .label-chosen { position: absolute; top: 20px; left: 20px; padding: 5px 15px; border: 4px solid #2ecc71; color: #2ecc71; border-radius: 10px; font-size: 1.8rem; font-weight: 900; opacity: 0; pointer-events: none; z-index: 20; transform: scale(5); transition: all 0.4s; background: rgba(0,0,0,0.3); }
         .label-chosen.active { opacity: 1; transform: scale(1) rotate(-15deg); }
         card-photo-container {width: 100%; height: 220px; /* 增加高度，不再是一小條 */border-radius: 16px; overflow: hidden; margin-bottom: 15px; background: #000; border: 1px solid rgba(255,255,255,0.1)}
         .close-swiper { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 12px 40px; border-radius: 50px; cursor: pointer; font-weight: bold; backdrop-filter: blur(10px); margin: 20px 0 40px 0; flex-shrink: 0; }
        
 
-.card-title { font-size: 1.4rem; font-weight: 800; margin: 0 0 10px 0; color: #fff; line-height: 1.3; }
-
+.card-title { font-size: 1.7rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
 /* 資訊網格：排列評分、距離、價格、時間 */
 .card-meta-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;
@@ -289,16 +300,18 @@
 
 .swipe-label { z-index: 100 !important; }
 
-.card-content { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+.card-content { 
+    padding: 60px 24px 24px 24px; /* 增加頂部 padding (60px) 避開標籤 */
+    display: flex; flex-direction: column; gap: 12px; 
+}
 .card-title { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0; line-height: 1.2; }
 .info-bar { display: flex; flex-wrap: wrap; gap: 10px; margin: 5px 0; }
 .pill { background: rgba(255, 255, 255, 0.08); padding: 5px 12px; border-radius: 50px; font-size: 0.78rem; font-weight: 600; color: #eee; display: flex; align-items: center; gap: 5px;}
 .pill-orange { background: rgba(255, 102, 0, 0.15); color: var(--primary-orange); }
 .pill-yellow { background: rgba(255, 204, 0, 0.15); color: var(--accent-yellow); }
-.detail-row { font-size: 0.88rem; line-height: 1.5; color: #ddd; }
+.detail-row { color: #eee; }
 .detail-label { color: var(--primary-orange); font-weight: 800; font-size: 0.7rem; text-transform: uppercase; margin-right: 8px; }
-.summary-quote { font-style: italic; color: #bbb; border-left: 3px solid var(--primary-orange); padding-left: 12px; margin: 15px 0; font-size: 0.9rem; line-height: 1.6;}
-
+.summary-quote { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px; }
 
     </style>
 </head>
@@ -808,16 +821,25 @@ function runTypingEffect() {
 // --- 新增：物理距離計算函式 ---
 function calculateDistance(lat1, lon1, lat2, lon2) {
     if (!lat1 || !lon1 || !lat2 || !lon2) return "未知距離";
-    const R = 6371; // 地球半徑 (km)
+    const R = 6371; 
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
               Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
               Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const d = R * c;
-    // 回傳格式化後的距離字串
-    return d < 1 ? `${(d * 1000).toFixed(0)}m` : `${d.toFixed(1)}km`;
+    
+    // 關鍵修正：直線距離 * 1.4 (道路轉折係數) = 模擬走路距離
+    let d = R * c * 1.4; 
+    
+    if (d < 1) {
+        let meters = (d * 1000).toFixed(0);
+        // 四捨五入到十位數，看起來更真實
+        meters = Math.ceil(meters / 10) * 10;
+        return `🚶 步行約 ${meters}m`;
+    } else {
+        return `🚶 步行約 ${d.toFixed(1)}km`;
+    }
 }
 
 async function getAiRanking(apiKey, cfg, rawPlaces) {
@@ -898,21 +920,20 @@ function renderCards(restaurants) {
         const wrapper = document.createElement('div'); wrapper.className = 'swipe-card-wrapper';
         const card = document.createElement('div'); card.className = 'swipe-card';
         
-        // 這裡移除了圖片區塊，只保留文字資訊
         card.innerHTML = `
-            <div class="swipe-hints"><div class="hint-item">← NOPE</div><div class="hint-item">LIKE →</div></div>
+            <div class="swipe-hints" style="top: 20px;"><div class="hint-item">← NOPE</div><div class="hint-item">LIKE →</div></div>
             <div class="swipe-label label-like">LIKE</div>
             <div class="swipe-label label-nope">NOPE</div>
             <div class="label-chosen">🏆 最終首選</div>
 
             <div class="card-content">
-                <h3 class="card-title" style="margin-top: 10px;">${res.name}</h3>
+                <h3 class="card-title">${res.name}</h3>
                 
                 <div class="info-bar">
-                    <div class="pill pill-yellow">⭐ googl評分${res.rating} (${res.review_count})</div>
-                    <div class="pill pill-orange">📍 ${res.distance}</div>
+                    <div class="pill pill-yellow">⭐ googl評分 ${res.rating} (${res.review_count} 則)</div>
+                    <div class="pill pill-orange">${res.distance}</div>
                     <div class="pill">💰 價位 NT$ ${res.price}</div>
-                    <div class="pill">🕒 營業時間 ${res.opening_hours}</div>
+                    <div class="pill">🕒 營業時間${res.opening_hours}</div>
                 </div>
 
                 <div class="detail-row"><span class="detail-label">🏠 地址 </span>${res.address}</div>
@@ -920,19 +941,19 @@ function renderCards(restaurants) {
                 
                 <div class="summary-quote">"${res.review_summary}"</div>
 
-                <div class="detail-row" style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.1); padding-top:15px;">
+                <div class="detail-row" style="margin-top:5px; border-top:1px solid rgba(255,255,255,0.1); padding-top:15px;">
                     <span class="detail-label">💡 推薦原因</span>
-                    <span style="color:var(--accent-yellow); font-weight:600;">${res.reason}</span>
+                    <span style="color:var(--accent-yellow); font-weight:600; line-height:1.5;">${res.reason}</span>
                 </div>
 
-                <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 查看地圖詳情</a>
+                <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 查看 Google Maps 路線</a>
             </div>
         `;
         wrapper.appendChild(card); stack.insertBefore(wrapper, stack.firstChild); initSwipe(card, wrapper, res);
     });
     
     const closeBtn = document.createElement('button');
-    closeBtn.className = 'close-swiper'; closeBtn.innerText = '← 返回修改'; 
+    closeBtn.className = 'close-swiper'; closeBtn.innerText = '← 返回修改條件'; 
     closeBtn.onclick = resetUI; stack.appendChild(closeBtn);
 }
         
