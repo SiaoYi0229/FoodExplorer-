@@ -206,23 +206,27 @@
     100% { width: 220px; height: 220px; opacity: 0; transform: scale(1.1); border-width: 0.5px; }
 }
 
+/* --- 頂級打字機動效 --- */
 .loader-text {
     margin-top: 50px;
     color: #fff;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 600;
     letter-spacing: 2px;
     text-align: center;
-    text-shadow: 0 0 15px rgba(0,0,0,0.5);
-    /* 打字機淡入感 */
-    animation: text-glow 2s ease-in-out infinite;
+    min-height: 1.5em;
+    /* 游標閃爍效果 */
+    border-right: 3px solid var(--primary-orange);
+    padding-right: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    animation: cursor-blink 0.8s infinite;
 }
 
-@keyframes text-glow {
-    0%, 100% { opacity: 0.7; }
-    50% { opacity: 1; }
+@keyframes cursor-blink {
+    0%, 100% { border-color: transparent; }
+    50% { border-color: var(--primary-orange); }
 }
-
         /* 卡片與滑動系統 */
         #swiper-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; display: none; flex-direction: column; align-items: center; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
         .card-stack { width: 100%; max-width: 360px; padding: 30px 0 50px 0; display: flex; flex-direction: column; align-items: center; gap: 25px; }
@@ -624,9 +628,9 @@ const mrtLinesTaipei = {
         function incrementUsage() { const today = new Date().toDateString(); const keyId = btoa(getStoredKey()).slice(-10); const count = getUsageCount() + 1; localStorage.setItem('USAGE_'+keyId, JSON.stringify({date: today, count: count})); updateUsageDisplay(); }
         function updateUsageDisplay() { const count = getUsageCount(); document.getElementById('usage-text').innerText = `今日剩餘次數：${DAILY_LIMIT - count} 次`; }
 
-         // --- 最終修正：頂級文案切換 ---
-// --- 1. 頂級文案切換 ---
-function updateLoaderText(stage) {
+        // --- 核心修正：自動打字機計時器 ---
+let typingTimer;
+function runTypingEffect() {
     const textElem = document.getElementById('loader-text');
     const texts = [
         "正在同步您的地理座標...",
@@ -634,15 +638,39 @@ function updateLoaderText(stage) {
         "正在挑選能驚艷您味蕾的驚喜...",
         "正在為您策劃專屬的美味提案..."
     ];
-    if (textElem) {
-        textElem.style.opacity = 0;
-        setTimeout(() => {
-            textElem.innerText = texts[stage];
-            textElem.style.opacity = 1;
-        }, 400);
+    
+    let stage = 0;
+    
+    // 單個文字打字函式
+    function typeChar(text) {
+        textElem.innerHTML = "";
+        let charIndex = 0;
+        if (typingTimer) clearInterval(typingTimer);
+        
+        typingTimer = setInterval(() => {
+            if (charIndex < text.length) {
+                textElem.innerHTML += text.charAt(charIndex);
+                charIndex++;
+            } else {
+                clearInterval(typingTimer);
+            }
+        }, 100); // 每個字跳出的速度 (100ms)
     }
-}
 
+    // 初始第一句
+    typeChar(texts[0]);
+
+    // 每 10 秒切換下一句 (假設總搜尋 40 秒)
+    if (loaderInterval) clearInterval(loaderInterval);
+    loaderInterval = setInterval(() => {
+        stage++;
+        if (stage < texts.length) {
+            typeChar(texts[stage]);
+        } else {
+            clearInterval(loaderInterval); // 停在最後一句
+        }
+    }, 10000); 
+}
        async function handleSearchClick() {
     const apiKey = getStoredKey();
     if (!apiKey) { document.getElementById('api-overlay').style.display = 'flex'; return; }
@@ -685,33 +713,25 @@ function updateLoaderText(stage) {
     const btn = document.getElementById('search-btn');
     
     loader.style.display = 'flex';
-    updateLoaderText(0); 
+    runTypingEffect(); // 啟動自動打字機效果
     btn.disabled = true;
 
     try {
-        // 第一階段：Google 數據
-        updateLoaderText(1);
+        // 第一階段：Google 數據 (包含物理範圍強制限制)
         const rawPlaces = await fetchRealPlaces(apiKey, config);
         
         if (!rawPlaces || rawPlaces.length === 0) {
-            throw new Error("在該區域找不到符合條件的店家，請嘗試放寬搜尋條件或更換類別。");
+            throw new Error("在該區域找不到符合條件的店家，請放寬搜尋條件。");
         }
 
-        // 第二階段：模擬過濾感
-        updateLoaderText(2); 
-        await new Promise(r => setTimeout(r, 800)); 
-        
-        // 第三階段：AI 加工
-        updateLoaderText(3);
+        // 第二階段：Gemini AI 處理
         const finalRecommendations = await getAiRanking(apiKey, config, rawPlaces);
 
         if (finalRecommendations && finalRecommendations.length > 0) {
             incrementUsage();
-            keptRestaurants = []; 
-            isFinalOne = false;
+            keptRestaurants = []; isFinalOne = false;
             renderCards(finalRecommendations);
         }
-
     } catch (e) {
         console.error(e);
         let errorMsg = e.message;
@@ -725,33 +745,33 @@ function updateLoaderText(stage) {
         }
         alert(errorMsg);
     } finally {
+        // 清理所有計時器
         if (loaderInterval) clearInterval(loaderInterval);
+        if (typingTimer) clearInterval(typingTimer);
         loader.style.display = 'none';
-        btn.disabled = (getUsageCount() >= DAILY_LIMIT);
+        btn.disabled = false;
     }
 }
 
+
+
         async function fetchRealPlaces(apiKey, cfg) {
-    let cleanFood = cfg.food.replace(" (什麼都想吃)", "").replace("全部", "餐廳");
-    let cleanDist = (cfg.district === "全區") ? "" : cfg.district;
-    
-    // 組合搜尋詞，加入「美食」增加準確度
-    let query = isNearbyMode ? cleanFood : `${cfg.cityName} ${cleanDist} ${cleanFood} 美食`;
+    let qFood = cfg.food.replace(" (什麼都想吃)", "").replace("全部", "美食餐廳");
+    let qDist = (cfg.district === "全區") ? "" : cfg.district;
+    let query = isNearbyMode ? qFood : `${cfg.cityName} ${qDist} ${qFood}`;
 
     const requestBody = {
         textQuery: query,
         maxResultCount: 15,
         languageCode: "zh-TW",
-        regionCode: "TW"
+        regionCode: "TW",
+        openNow: cfg.isOpenOnly
     };
 
-    // --- 核心修正：強制物理邊界 ---
+    // --- 強制 1km / 800m 物理限制，解決跑太遠的問題 ---
     if (userCoords.lat && userCoords.lng) {
-        let radius = isNearbyMode ? 1000.0 : 800.0; // GPS 1km, 車站 800m
-        
-        // 使用 locationRestriction 強制過濾掉遠處的店家
         requestBody.locationRestriction = {
-            circle: { center: { latitude: userCoords.lat, longitude: userCoords.lng }, radius: radius }
+            circle: { center: { latitude: userCoords.lat, longitude: userCoords.lng }, radius: isNearbyMode ? 1000.0 : 800.0 }
         };
     }
 
@@ -768,48 +788,47 @@ function updateLoaderText(stage) {
     return data.places || [];
 }
 
-        async function getAiRanking(apiKey, cfg, rawPlaces) {
+async function getAiRanking(apiKey, cfg, rawPlaces) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     const simplifiedList = rawPlaces.map(p => {
-        // --- 核心修正：前端直接計算物理距離，不靠 AI 猜 ---
-        let distStr = "未知";
-        if(userCoords.lat && p.location) {
-            distStr = calculateDistance(userCoords.lat, userCoords.lng, p.location.latitude, p.location.longitude);
-        }
-
+        // --- 修正：前端直接算物理距離，解決 AI 亂猜距離的問題 ---
+        let d = calculateDistance(userCoords.lat, userCoords.lng, p.location.latitude, p.location.longitude);
         return {
             name: p.displayName.text,
             rating: p.rating,
             reviews: p.userRatingCount,
             address: p.formattedAddress,
             place_id: p.id,
-            price_level: p.priceLevel,
-            distance: distStr, // 帶入精準距離
-            hours_data: p.regularOpeningHours?.weekdayDescriptions?.[new Date().getDay() === 0 ? 6 : new Date().getDay()-1] || "未提供",
-            photo_name: p.photos && p.photos.length > 0 ? p.photos[0].name : null
+            distance: d, // 帶入精準距離
+            // 抓取今天的營業時間描述
+            today_hours: p.regularOpeningHours?.weekdayDescriptions?.[new Date().getDay() === 0 ? 6 : new Date().getDay()-1] || "未提供",
+            photo_name: p.photos?.[0]?.name || null
         };
     });
 
-    const prompt = `你是美食專家。請從名單選出最符需求「${cfg.food} / ${cfg.purpose}」的 6 家店：${JSON.stringify(simplifiedList)}
+    const prompt = `你是美食鑑定家。從名單選 6 家最符「${cfg.food} / ${cfg.purpose} / 預算${cfg.budget}」的餐廳：${JSON.stringify(simplifiedList)}
     【規則】：
-    1. 必須保留我提供的 distance。
-    2. 價格：若 price_level 為 1 回傳 "$100~$300"，2 為 "$300~$800"，3 為 "$800~$1500"，4 為 "$2000+"。
-    3. 營業時間：請直接使用我給你的 hours_data。
-    4. 必須挑選「看起來像餐廳」而非公司的地點。
-    5. 僅輸出 JSON 陣列。欄位：name, rating, review_count, signature, opening_hours, price, review_summary, reason, place_id, distance, address, photo_name。`;
+    1. 必須保留我給你的 distance。
+    2. 價格：依 price_level 給出台幣區間(如$300-$600)。
+    3. 營業時間：直接採用我給的 today_hours。
+    4. 僅回傳 JSON。`;
 
     const response = await fetch(url, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { response_mime_type: "application/json", temperature: 0.2 } })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { response_mime_type: "application/json", temperature: 0.2 }
+        })
     });
 
     const result = await response.json();
-    const list = JSON.parse(result.candidates[0].content.parts[0].text);
+    const recommendations = JSON.parse(result.candidates[0].content.parts[0].text);
     
-    return list.map(res => ({
+    return recommendations.map(res => ({
         ...res,
-        // 修正：加大照片解析度 (maxHeightPx=800)，沒照片就給 null
+        // 加大照片解析度，並確保是實體餐廳圖
         photo_url: res.photo_name ? `https://places.googleapis.com/v1/${res.photo_name}/media?key=${apiKey}&maxHeightPx=800` : null,
         map_query: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.name)}&query_place_id=${res.place_id}`
     }));
