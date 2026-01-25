@@ -331,6 +331,64 @@
 .detail-label { color: var(--primary-orange); font-weight: 800; font-size: 0.7rem; text-transform: uppercase; margin-right: 8px; }
 .summary-quote { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px; }
 
+        /* --- 沒有喜歡店家的提示窗樣式 --- */
+#no-match-modal {
+    display: none; /* 預設隱藏 */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 85%;
+    max-width: 320px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 32px;
+    padding: 40px 20px;
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 500;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+.modal-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 10px var(--primary-orange));
+}
+
+#no-match-modal h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.4rem;
+    color: #fff;
+}
+
+#no-match-modal p {
+    color: #ccc;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.modal-retry-btn {
+    background: linear-gradient(135deg, #FF8533, #FF6600);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 50px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(255, 102, 0, 0.3);
+    transition: 0.3s;
+}
+
+.modal-retry-btn:hover {
+    transform: scale(1.05);
+}
     </style>
 </head>
 <body touch-action="none">
@@ -447,6 +505,12 @@
 
     <div id="swiper-overlay">
         <div class="card-stack" id="card-stack"></div>
+        <div id="no-match-modal">
+    <div class="modal-icon">🔍</div>
+    <h3>沒有心儀的店家嗎？</h3>
+    <p>別擔心，美食就在不遠處。<br>試著調整搜尋條件，再次探索吧！</p>
+    <button class="modal-retry-btn" onclick="resetUI()">返回並重新探索</button>
+</div>
     </div>
 
     <script>
@@ -1054,35 +1118,40 @@ function initSwipe(card, wrapper, res) {
 }
 
          function checkStackEnd(wrapper) {
-            setTimeout(() => {
-                wrapper.remove();
-                const remaining = document.querySelectorAll('.swipe-card-wrapper');
-                if (remaining.length === 0) {
-                    if (keptRestaurants.length === 0) {
-                        const closeBtn = document.querySelector('.close-swiper');
-                        if (closeBtn) closeBtn.style.display = 'none';
-                        const stack = document.getElementById('card-stack');
-                        stack.innerHTML = `
-                            <div style="background: rgba(30,30,30,0.9); border: 1px solid var(--glass-border); padding: 30px; border-radius: 24px; text-align: center; margin-top: 100px; width: 85%; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                                <div style="color:white; font-size: 1.2rem; line-height: 1.8; margin-bottom: 25px;">
-                                    <span>沒有喜歡的店家？</span><br>
-                                    <span style="color:var(--primary-orange); font-weight:bold;">再試著探索一次吧！</span>
-                                </div>
-                                <button onclick="resetUI()" style="background: var(--primary-orange); color: white; border: none; padding: 12px 40px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 100%;">
-                                    我知道了
-                                </button>
-                            </div>
-                        `;
-                    } else {
-                        const nextRoundData = [...keptRestaurants];
-                        keptRestaurants = []; 
-                        renderCards(nextRoundData);
-                    }
-                }
-            }, 400);
+    setTimeout(() => {
+        wrapper.remove();
+        const cardsLeft = document.querySelectorAll('.swipe-card-wrapper').length;
+        
+        if (cardsLeft === 0) {
+            // 如果這輪有「Like」的，就繼續篩選
+            if (keptRestaurants.length > 0) {
+                renderCards([...keptRestaurants]);
+                keptRestaurants = [];
+            } else {
+                // --- 關鍵修改：如果這輪全滑掉了，不直接 resetUI，而是顯示視窗 ---
+                document.getElementById('no-match-modal').style.display = 'flex';
+                // 隱藏原本堆疊底下的「返回修改」按鈕，讓視覺更乾淨
+                const closeBtn = document.querySelector('.close-swiper');
+                if (closeBtn) closeBtn.style.display = 'none';
+            }
         }
-        function resetUI() { document.getElementById('swiper-overlay').style.display = 'none'; document.getElementById('main-ui').classList.remove('blur-mode'); keptRestaurants = []; }
-
+    }, 400);
+}
+function resetUI() {
+    // 隱藏所有視窗
+    document.getElementById('swiper-overlay').style.display = 'none';
+    document.getElementById('no-match-modal').style.display = 'none';
+    
+    // 恢復主介面
+    document.getElementById('main-ui').classList.remove('blur-mode');
+    
+    // 清空暫存
+    keptRestaurants = [];
+    
+    // 確保以後打開時「返回修改」按鈕會出現
+    const closeBtn = document.querySelector('.close-swiper');
+    if (closeBtn) closeBtn.style.display = 'block';
+}
         function checkStackEnd(wrapper) { setTimeout(()=>{ wrapper.remove(); if(document.querySelectorAll('.swipe-card-wrapper').length===0){ if(keptRestaurants.length===0){ resetUI(); }else{ renderCards([...keptRestaurants]); keptRestaurants=[]; } } },400); }
         function resetUI(){ document.getElementById('swiper-overlay').style.display='none'; document.getElementById('main-ui').classList.remove('blur-mode'); keptRestaurants=[]; }
     </script>
