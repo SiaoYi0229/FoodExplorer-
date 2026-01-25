@@ -92,10 +92,9 @@
         .toggle-btn.selected { background: rgba(255,102,0,0.2); border-color: var(--primary-orange); color: var(--primary-orange); font-weight: bold; }
         /* 營業中選中：綠色 */
         #btn-open.selected { background: rgba(46,204,113,0.15); border-color: #2ecc71; color: #2ecc71; }
-
+        .footer-action { width: 100%; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; }
         .cta-button { width: 100%; background: linear-gradient(180deg, #FF8533, #FF6600); border: none; padding: 16px; font-weight: 700; border-radius: 16px; color: #fff; cursor: pointer; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(255, 102, 0, 0.4); transition: 0.3s; }
-        .cta-button:disabled { background: linear-gradient(180deg, #FF8533, #FF6600); box-shadow: none; cursor: not-allowed; opacity: 0.8; }
-        .hide-field { display: none !important; }
+        .usage-hint { font-size: 0.85rem; opacity: 0.7; color: #ffffff; font-weight: 500; flex: 0 0 auto; margin-top: 8px; }
 
         /* 載入與卡片樣式維持原狀... */
         #loader {display: none;position: fixed;top: 0; left: 0;width: 100vw; height: 100vh;z-index: 10000;background: rgba(0, 0, 0, 0.7);backdrop-filter: blur(20px) saturate(160%);flex-direction: column; align-items: center; justify-content: center;}
