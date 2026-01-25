@@ -461,11 +461,11 @@
     }, 7000); // <--- 已從 10000 改為 5000
 }
        
-}async function handleSearchClick() {
+async function handleSearchClick() {
     const apiKey = getStoredKey();
     if (!apiKey) { document.getElementById('api-overlay').style.display = 'flex'; return; }
     
-    // 檢查縣市與交通工具的驗證
+    // 1. 驗證交通工具與縣市匹配邏輯
     if (!isNearbyMode) {
         const cityKey = document.getElementById('city').value;
         const cityName = document.getElementById('city').options[document.getElementById('city').selectedIndex].text;
@@ -479,13 +479,14 @@
         if (transport === 'airport' && !hasAirport.includes(cityKey)) { alert(`⚠️ ${cityName} 目前沒有機場。`); return; }
     }
 
+    // 2. 封裝搜尋條件
     const config = {
         city: document.getElementById('city').value,
         cityName: document.getElementById('city').options[document.getElementById('city').selectedIndex].text,
         district: document.getElementById('district').value,
         transport: document.getElementById('transport').value,
         food: document.getElementById('food').options[document.getElementById('food').selectedIndex].text,
-        people: document.getElementById('people') ? document.getElementById('people').value : "1~2人",
+        people: document.getElementById('people') ? document.getElementById('people').value : "1~2 人",
         purpose: document.getElementById('purpose').options[document.getElementById('purpose').selectedIndex].text,
         budget: document.getElementById('budget').options[document.getElementById('budget').selectedIndex].text,
         station: document.getElementById('mrt-station').value,
@@ -642,67 +643,111 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 async function getAiRanking(apiKey, cfg, rawPlaces) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-    // 1. 準備清單並計算物理距離
-    const simplifiedList = rawPlaces.map(p => {
-        let d = calculateDistance(userCoords.lat, userCoords.lng, p.location.latitude, p.location.longitude);
-        return {
+    // 1. 第一階段：串接 Google Routes API 獲取「真實走路距離與時間」
+    let detailedList = [];
+    try {
+        const routeResponse = await fetch('https://routes.googleapis.com/distanceMatrix/v1:computeRouteMatrix', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Goog-Api-Key': apiKey,
+                'X-Goog-FieldMask': 'destinationIndex,distanceMeters,duration'
+            },
+            body: JSON.stringify({
+                "origins": [{ "waypoint": { "location": { "latLng": { "latitude": userCoords.lat, "longitude": userCoords.lng }}} }],
+                "destinations": rawPlaces.map(p => ({ "waypoint": { "placeId": p.id } })),
+                "travelMode": "WALK", // 指定走路模式
+                "units": "METRIC"
+            })
+        });
+        const routeData = await routeResponse.json();
+
+        // 將 Google 算好的走路數據與原始資料合併
+        detailedList = rawPlaces.map((p, index) => {
+            const route = routeData.find(r => r.destinationIndex === index);
+            let walkDist = route ? (route.distanceMeters < 1000 ? `${route.distanceMeters}m` : `${(route.distanceMeters/1000).toFixed(1)}km`) : "計算中";
+            let walkTime = route ? `約 ${Math.ceil(parseInt(route.duration) / 60)} 分鐘` : "";
+            
+            return {
+                name: p.displayName.text,
+                rating: p.rating || "N/A",
+                reviews: p.userRatingCount || 0,
+                address: p.formattedAddress,
+                place_id: p.id,
+                real_distance: `🚶 ${walkDist} (${walkTime})`, // 這是真正的 Google 規劃距離
+                today_hours: p.regularOpeningHours?.weekdayDescriptions?.[new Date().getDay() === 0 ? 6 : new Date().getDay()-1] || "未提供"
+            };
+        });
+    } catch (e) {
+        console.error("Routes API 請求失敗，退回物理計算：", e);
+        // 如果 Routes API 沒開或失敗，退回使用我們寫好的物理計算 (1.4x 系數)
+        detailedList = rawPlaces.map(p => ({
             name: p.displayName.text,
             rating: p.rating || "N/A",
             reviews: p.userRatingCount || 0,
             address: p.formattedAddress,
             place_id: p.id,
-            distance: d,
+            real_distance: calculateDistance(userCoords.lat, userCoords.lng, p.location.latitude, p.location.longitude),
             today_hours: p.regularOpeningHours?.weekdayDescriptions?.[new Date().getDay() === 0 ? 6 : new Date().getDay()-1] || "未提供"
-        };
-    });
+        }));
+    }
 
-    // 2. 處理隱藏版指令
+    // 2. 第二階段：動態生成「隱藏版」或「熱門版」的 AI 指令
     const hiddenGemInstruction = cfg.isHidden ? 
-        `【重點任務：隱藏版模式已開啟】優先挑選名單中「評論數較少（例如少於 300 則）」但「評分極高（例如 4.3 以上）」、且位在巷弄內的私廚小店。嚴禁推薦大型連鎖店。` : 
-        `【正常模式：挑選當地最受歡迎且評價穩定的優質名店】`;
+        `【重點任務：隱藏版模式已開啟】
+        1. 優先挑選名單中「評論數較少（例如少於 300 則）」但「評分極高（例如 4.3 以上）」的店。
+        2. 優先挑選地址在「巷、弄」內，或是只有在地人才知道的私廚小店。
+        3. 嚴禁推薦連鎖名店（如：鼎泰豐、馬辣等）。` : 
+        `【正常模式：名店推薦】挑選當地評價最穩定、最受歡迎且指標性的高品質餐廳。`;
 
-    // 3. 建立 Prompt
-    const prompt = `你是頂級美食鑑定家。請從以下名單挑選 6 家最符合「${cfg.food} / ${cfg.purpose} / 預算 ${cfg.budget}」的店。
-    
+    // 3. 第三階段：建立完整 Prompt
+    const prompt = `你是頂級美食鑑定家。請從提供的名單中挑選 6 家最符「${cfg.food} / ${cfg.purpose} / 預算 ${cfg.budget}」的餐廳。
+
     ${hiddenGemInstruction}
 
-    名單數據：${JSON.stringify(simplifiedList)}
+    名單數據：${JSON.stringify(detailedList)}
 
     【回傳規範】：
-    請嚴格回傳一個 JSON 陣列，每個物件必須包含以下欄位：
+    僅回傳一個 JSON 陣列，每個物件必須精準包含以下欄位：
     - name: 餐廳名稱
     - rating: 評分 (數字)
     - review_count: 評論數
-    - distance: 直接採用我提供的 distance (例如 🚶 步行約 800m)
-    - price: 台幣消費區間 (例如 400-800)
+    - distance: 直接採用我提供的 real_distance 內容 (例如 🚶 800m (約 12 分鐘))
+    - price: 消費區間 (例如 NT$400-800)
     - opening_hours: 營業時間
-    - address: 地址
-    - signature: 推薦必點招牌
-    - review_summary: 一句話評論總結
-    - reason: 專業推薦原因
+    - address: 餐廳地址
+    - signature: 該店必點的 1-2 樣招牌菜色
+    - review_summary: 濃縮網路評價最精闢的一句評論
+    - reason: 專業的 AI 推薦分析（為何選這間店）
     - place_id: 原始數據中的 place_id`;
 
+    // 4. 第四階段：發送給 Gemini
     const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { response_mime_type: "application/json", temperature: 0.3 }
+            generationConfig: { 
+                response_mime_type: "application/json", 
+                temperature: 0.3 
+            }
         })
     });
 
     const result = await response.json();
     if (!result.candidates || !result.candidates[0].content.parts[0].text) {
-        throw new Error("AI 無法產生推薦，請檢查 API 權限。");
+        throw new Error("AI 無法產生推薦，請檢查 API 金鑰與 Routes/Gemini 權限。");
     }
 
     const recommendations = JSON.parse(result.candidates[0].content.parts[0].text);
     
+    // 5. 第五階段：產出帶有「走路導航」連結的最終數據
     return recommendations.map(res => ({
         ...res,
-        map_query: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.name)}&query_place_id=${res.place_id}`
+        // 修改網址：自動填入起點與終點，並設定為走路模式 (travelmode=walking)
+        map_query: `https://www.google.com/maps/dir/?api=1&origin=${userCoords.lat},${userCoords.lng}&destination=${encodeURIComponent(res.name)}&destination_place_id=${res.place_id}&travelmode=walking`
     }));
 }
         
