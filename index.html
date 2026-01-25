@@ -654,22 +654,22 @@ function runTypingEffect() {
             } else {
                 clearInterval(typingTimer);
             }
-        }, 100); // 每個字跳出的速度 (100ms)
+        }, 100); 
     }
 
     // 初始第一句
     typeChar(texts[0]);
 
-    // 每 10 秒切換下一句 (假設總搜尋 40 秒)
+    // 每 5 秒切換下一句
     if (loaderInterval) clearInterval(loaderInterval);
     loaderInterval = setInterval(() => {
         stage++;
         if (stage < texts.length) {
             typeChar(texts[stage]);
         } else {
-            clearInterval(loaderInterval); // 停在最後一句
+            clearInterval(loaderInterval); 
         }
-    }, 10000); 
+    }, 5000); // <--- 已從 10000 改為 5000
 }
        async function handleSearchClick() {
     const apiKey = getStoredKey();
