@@ -256,14 +256,8 @@
         .label-chosen { position: absolute; top: 20px; left: 20px; padding: 5px 15px; border: 4px solid #2ecc71; color: #2ecc71; border-radius: 10px; font-size: 1.8rem; font-weight: 900; opacity: 0; pointer-events: none; z-index: 20; transform: scale(5); transition: all 0.4s; background: rgba(0,0,0,0.3); }
         .label-chosen.active { opacity: 1; transform: scale(1) rotate(-15deg); }
         card-photo-container {width: 100%; height: 220px; /* 增加高度，不再是一小條 */border-radius: 16px; overflow: hidden; margin-bottom: 15px; background: #000; border: 1px solid rgba(255,255,255,0.1)}
-        .card-photo-container img {width: 100%; height: 100%; object-fit: cover; /* 確保照片填滿且不變形 */}
         .close-swiper { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 12px 40px; border-radius: 50px; cursor: pointer; font-weight: bold; backdrop-filter: blur(10px); margin: 20px 0 40px 0; flex-shrink: 0; }
-        .card-photo-container {
-    width: 100%; height: 200px; 
-    border-radius: 18px; overflow: hidden; margin-bottom: 15px; 
-    background: #111; border: 1px solid rgba(255,255,255,0.1);
-}
-.card-photo-container img { width: 100%; height: 100%; object-fit: cover; }
+       
 
 .card-title { font-size: 1.4rem; font-weight: 800; margin: 0 0 10px 0; color: #fff; line-height: 1.3; }
 
@@ -293,8 +287,6 @@
     font-size: 0.88rem; font-style: italic; color: #ddd; margin: 15px 0;
 }
 
-        .card-image-box {width: 100%; height: 240px; background: #000; position: relative;}
-.card-image-box {width: 100%; height: 240px; background: #000; position: relative; z-index: 1;}
 .swipe-label { z-index: 100 !important; }
 
 .card-content { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
@@ -831,7 +823,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 async function getAiRanking(apiKey, cfg, rawPlaces) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-    // 預處理資料，讓 AI 更好懂
+    // 1. 準備精煉的資料給 AI，包含精確距離與當日營業時間
     const simplifiedList = rawPlaces.map(p => {
         let d = calculateDistance(userCoords.lat, userCoords.lng, p.location.latitude, p.location.longitude);
         return {
@@ -841,51 +833,55 @@ async function getAiRanking(apiKey, cfg, rawPlaces) {
             address: p.formattedAddress,
             place_id: p.id,
             distance: d,
-            today_hours: p.regularOpeningHours?.weekdayDescriptions?.[new Date().getDay() === 0 ? 6 : new Date().getDay()-1] || "未提供",
-            photo_name: p.photos?.[0]?.name || null
+            // 抓取今天的營業時間描述
+            today_hours: p.regularOpeningHours?.weekdayDescriptions?.[new Date().getDay() === 0 ? 6 : new Date().getDay()-1] || "未提供"
         };
     });
 
-    // 關鍵！強制要求 AI 回傳跟你 renderCards 裡一模一樣的欄位
-    const prompt = `你是頂級美食鑑定家。從以下名單選出 6 家最符合「${cfg.food} / ${cfg.purpose} / 預算${cfg.budget}」的餐廳。
-    名單內容：${JSON.stringify(simplifiedList)}
+    // 2. 強化版 Prompt：要求 AI 展現專業鑑定水準，但不要處理 photo
+    const prompt = `你是頂級美食鑑定家。請從提供的名單中，挑選出 6 家最符合「${cfg.food}」需求、適合「${cfg.purpose}」、且預算約在「${cfg.budget}」的餐廳。
 
-    請嚴格遵守回傳格式，僅回傳一個 JSON 陣列，每個物件必須包含以下欄位，不可遺漏：
-    - name: 餐廳名稱
-    - rating: 評分 (數字)
-    - review_count: 評論數
-    - distance: 請直接使用我給你的 distance 內容 (例如 "800m")
-    - price: 台幣價格區間 (例如 "300-600")
-    - opening_hours: 營業時間
-    - address: 詳細地址
-    - signature: 推薦必點招牌菜
-    - review_summary: 一句話總結評論
-    - reason: 推薦這間店的 AI 分析原因
-    - place_id: 店家的 Google Place ID
-    - photo_name: 請直接保留我給你的 photo_name`;
+    名單數據：${JSON.stringify(simplifiedList)}
+
+    【回傳規範】：
+    1. 僅回傳一個 JSON 陣列，不要包含任何 Markdown 或解釋文字。
+    2. 每個物件必須精準包含以下欄位：
+       - name: 餐廳名稱
+       - rating: 評分 (數字)
+       - review_count: 評論數 (數字)
+       - distance: 直接採用我提供的 distance 內容
+       - price: 預估台幣消費金額 (例如 "400 - 800")
+       - opening_hours: 直接採用我提供的 today_hours
+       - address: 餐廳地址
+       - signature: 該店必點的 1-3 樣招牌菜色
+       - review_summary: 濃縮網路上對這間店最精闢的一句評論
+       - reason: 專業的 AI 推薦分析（為何這間店適合這次的搜尋條件）
+       - place_id: 原始數據中的 place_id`;
 
     const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { response_mime_type: "application/json", temperature: 0.2 }
+            generationConfig: { 
+                response_mime_type: "application/json", 
+                temperature: 0.3 // 稍微提高一點創造力，讓推薦理由更好看
+            }
         })
     });
 
     const result = await response.json();
-    
-    // 安全性檢查
-    if (!result.candidates || !result.candidates[0].content.parts[0].text) {
-        throw new Error("AI 無法產生推薦清單，請稍後再試。");
+
+    // 安全檢查：確保 AI 有成功回傳內容
+    if (!result.candidates || result.candidates.length === 0) {
+        throw new Error("AI 忙碌中或無法產生建議，請稍後再試。");
     }
 
     const recommendations = JSON.parse(result.candidates[0].content.parts[0].text);
     
-    // 將 AI 回傳的資料加上圖片網址與地圖網址
+    // 3. 補上地圖查詢 URL
     return recommendations.map(res => ({
         ...res,
-        photo_url: res.photo_name ? `https://places.googleapis.com/v1/${res.photo_name}/media?key=${apiKey}&maxHeightPx=800` : null,
         map_query: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.name)}&query_place_id=${res.place_id}`
     }));
 }
@@ -893,7 +889,8 @@ async function getAiRanking(apiKey, cfg, rawPlaces) {
         // --- 修改後的卡片渲染函式 ---
 function renderCards(restaurants) {
     document.getElementById('main-ui').classList.add('blur-mode');
-    const stack = document.getElementById('card-stack'); stack.innerHTML = ''; 
+    const stack = document.getElementById('card-stack'); 
+    stack.innerHTML = ''; 
     document.getElementById('swiper-overlay').style.display = 'flex';
     isFinalOne = (restaurants.length === 1);
 
@@ -901,26 +898,25 @@ function renderCards(restaurants) {
         const wrapper = document.createElement('div'); wrapper.className = 'swipe-card-wrapper';
         const card = document.createElement('div'); card.className = 'swipe-card';
         
+        // 這裡移除了圖片區塊，只保留文字資訊
         card.innerHTML = `
             <div class="swipe-hints"><div class="hint-item">← NOPE</div><div class="hint-item">LIKE →</div></div>
             <div class="swipe-label label-like">LIKE</div>
             <div class="swipe-label label-nope">NOPE</div>
             <div class="label-chosen">🏆 最終首選</div>
 
-            ${res.photo_url ? `<div class="card-image-box"><img src="${res.photo_url}"></div>` : ''}
-
             <div class="card-content">
-                <h3 class="card-title">${res.name}</h3>
+                <h3 class="card-title" style="margin-top: 10px;">${res.name}</h3>
                 
                 <div class="info-bar">
                     <div class="pill pill-yellow">⭐ googl評分${res.rating} (${res.review_count})</div>
                     <div class="pill pill-orange">📍 ${res.distance}</div>
-                    <div class="pill">💰 價位 NT$${res.price}</div>
-                    <div class="pill">🕒 營業時間${res.opening_hours}</div>
+                    <div class="pill">💰 價位 NT$ ${res.price}</div>
+                    <div class="pill">🕒 營業時間 ${res.opening_hours}</div>
                 </div>
 
-                <div class="detail-row"><span class="detail-label">🏠 地址</span>${res.address}</div>
-                <div class="detail-row"><span class="detail-label">🔥 必點招牌</span>${res.signature}</div>
+                <div class="detail-row"><span class="detail-label">🏠 地址 </span>${res.address}</div>
+                <div class="detail-row"><span class="detail-label">🔥 必點招牌 </span>${res.signature}</div>
                 
                 <div class="summary-quote">"${res.review_summary}"</div>
 
@@ -929,7 +925,7 @@ function renderCards(restaurants) {
                     <span style="color:var(--accent-yellow); font-weight:600;">${res.reason}</span>
                 </div>
 
-                <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 打開地圖查看詳情</a>
+                <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 查看地圖詳情</a>
             </div>
         `;
         wrapper.appendChild(card); stack.insertBefore(wrapper, stack.firstChild); initSwipe(card, wrapper, res);
@@ -939,7 +935,7 @@ function renderCards(restaurants) {
     closeBtn.className = 'close-swiper'; closeBtn.innerText = '← 返回修改'; 
     closeBtn.onclick = resetUI; stack.appendChild(closeBtn);
 }
-
+        
 // --- 修改後的滑動邏輯 (修正蓋章時 LIKE 消失) ---
 function initSwipe(card, wrapper, res) {
     let startX = 0, startY = 0, currentX = 0, isScrolling = false;
