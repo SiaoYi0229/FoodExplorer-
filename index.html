@@ -23,37 +23,10 @@
         #bg-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
         .bg-slide { position: absolute; width: 100%; height: 100%; background-size: cover; background-position: center; opacity: 0; transition: opacity 1s; }
         .bg-slide.active { opacity: 0.6; }
-
         /* API 設定畫面 */
-#api-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5); backdrop-filter: blur(15px);
-    z-index: 5000; display: none; align-items: center; justify-content: center;
-    padding: 20px; /* 確保四周有留白，不頂天立地 */
-}        
-.api-card {
-    background: rgba(20, 20, 20, 0.95) !important;
-    padding: 30px 25px 25px 25px !important;
-    border-radius: 32px !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    display: flex; flex-direction: column;
-    width: 100%; max-width: 350px;
-    /* 關鍵修正：限制卡片總高度，多出的部分內部滾動 */
-    max-height: 85vh; 
-    overflow-y: auto;
-    gap: 15px;
-}        
-        /* --- 教學框：精緻嵌入、不頂天立地、圓角完整 --- */
-        #api-guide-box {
-    display: none;
-    text-align: left;
-    background: rgba(0, 0, 0, 0.4);
-    border-radius: 20px;
-    padding: 15px;
-    margin: 5px 0 10px 0;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-}
+        #api-overlay {position: fixed; top: 0; left: 0; width: 100%; height: 100%;background: rgba(0,0,0,0.5); backdrop-filter: blur(15px); z-index: 5000; display: none; align-items: center; justify-content: center;padding: 20px;}        
+        .api-card {background: rgba(20, 20, 20, 0.95) !important;padding: 30px 25px 25px 25px !important;border-radius: 32px !important;border: 1px solid rgba(255, 255, 255, 0.08) !important;display: flex; flex-direction: column;width: 100%; max-width: 350px;max-height: 85vh; overflow-y: auto;gap: 15px;}        
+        #api-guide-box {display: none;text-align: left;background: rgba(0, 0, 0, 0.4);border-radius: 20px;padding: 15px;margin: 5px 0 10px 0;border: 1px solid rgba(255, 255, 255, 0.05) !important;box-shadow: inset 0 0 20px rgba(0,0,0,0.5);}
         .guide-steps-container { display: flex; flex-direction: column; gap: 18px; }
         .step-item { display: flex; flex-direction: column; gap: 8px; }
         .step-title { font-size: 0.9rem; font-weight: 700; color: #eee; display: flex; align-items: center; gap: 10px; }
@@ -64,7 +37,6 @@
         .api-tag { flex: 1; background: rgba(255, 255, 255, 0.03); padding: 12px 8px; border-radius: 12px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.05); }
         .api-tag-name { display: block; color: var(--accent-yellow); font-size: 0.75rem; font-weight: 800; margin-bottom: 4px; }
         .api-tag-desc { display: block; color: #888; font-size: 0.65rem; }
-
         .api-input { width: 100%; background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 15px; color: white; font-size: 1rem; text-align: center; }
         .api-save-btn { width: 100%; background: linear-gradient(135deg, #FF8533, #FF6600); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 10px 20px rgba(255, 102, 0, 0.2); }
         #toggle-guide-btn { background: rgba(255, 204, 0, 0.1); border: 1px solid var(--accent-yellow); color: var(--accent-yellow); padding: 10px; border-radius: 10px; font-size: 0.85rem; cursor: pointer; }
@@ -108,31 +80,12 @@
         .loader-text {margin-top: 50px;color: #fff;font-size: 1.15rem;font-weight: 600;letter-spacing: 2px;text-align: center;min-height: 1.5em;border-right: 3px solid var(--primary-orange);padding-right: 8px;white-space: nowrap;overflow: hidden;animation: cursor-blink 0.8s infinite;}
         @keyframes cursor-blink {0%, 100% { border-color: transparent; }50% { border-color: var(--primary-orange); }}
         /* --- 卡片疊加與滑動系統系統 (高質感原版) --- */
-        #swiper-overlay { 
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    z-index: 100; display: none; flex-direction: column; align-items: center; 
-    background: radial-gradient(circle at center, rgba(30, 40, 50, 0.6) 0%, rgba(10, 15, 20, 0.85) 100%);
-    backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); 
-    overflow-y: auto; 
-}
+        #swiper-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; display: none; flex-direction: column; align-items: center; background: radial-gradient(circle at center, rgba(30, 40, 50, 0.6) 0%, rgba(10, 15, 20, 0.85) 100%);backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); overflow-y: auto; }
         .card-stack { width: 100%; max-width: 360px; padding: 30px 0 50px 0; display: flex; flex-direction: column; align-items: center; gap: 25px; }
         .swipe-card-wrapper { width: 92%; flex-shrink: 0; position: relative; transition: transform 0.4s ease, opacity 0.4s ease; touch-action: pan-y; }
-        .swipe-card { 
-    width: 100%; 
-    background: rgba(255, 255, 255, 0.08); 
-    border-radius: 32px; 
-    border: 1px solid rgba(255, 255, 255, 0.15); 
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    display: flex; flex-direction: column; position: relative; 
-    overflow: hidden; height: auto;
-}
-
-
-        /* 關鍵：80px 頂部留白，確保 LIKE/NOPE 標籤不遮擋標題 */
-.card-content { 
-    padding: 60px 24px 24px 24px; /* 增加頂部 padding (60px) 避開標籤 */
-    display: flex; flex-direction: column; gap: 12px; }
-.card-title { font-size: 1.7rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); } 
+        .swipe-card { width: 100%; background: rgba(255, 255, 255, 0.08); border-radius: 32px; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.4);display: flex; flex-direction: column; position: relative; overflow: hidden; height: auto;}
+        .card-content { padding: 60px 24px 24px 24px; /* 增加頂部 padding (60px) 避開標籤 */display: flex; flex-direction: column; gap: 12px; }
+        .card-title { font-size: 1.7rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); } 
         .detail-row { color: #eee; }
         .info-bar { display: flex; flex-wrap: wrap; gap: 10px; margin: 5px 0; }
         .pill { background: rgba(255, 255, 255, 0.08); padding: 5px 12px; border-radius: 50px; font-size: 0.78rem; font-weight: 600; color: #eee; display: flex; align-items: center; gap: 5px;}
@@ -140,17 +93,13 @@
         .pill-yellow { background: rgba(255, 204, 0, 0.15); color: var(--accent-yellow); }
         .summary-quote { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px; }
         .card-map-btn { background: var(--primary-orange); color: #fff; text-decoration: none; padding: 14px; border-radius: 14px; text-align: center; font-weight: bold; margin-top: 10px; }
-
-
-         .swipe-hints { position: absolute; top: 12px; left: 0; width: 100%; display: flex; justify-content: space-between; padding: 0 15px; pointer-events: none; z-index: 5; }
+        .swipe-hints { position: absolute; top: 12px; left: 0; width: 100%; display: flex; justify-content: space-between; padding: 0 15px; pointer-events: none; z-index: 5; }
         .hint-item { font-size: 0.65rem; font-weight: bold; color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
         .swipe-label { position: absolute; top: 40px;padding: 5px 15px; border: 4px solid; border-radius: 12px; font-size: 2.2rem; font-weight: 900; text-transform: uppercase; opacity: 0; pointer-events: none; z-index: 110; }
         .label-like { right: 25px; color: #2ecc71; border-color: #2ecc71; transform: rotate(15deg); text-shadow: 0 0 10px rgba(46,204,113,0.5); }
         .label-nope { left: 25px; color: #e74c3c; border-color: #e74c3c; transform: rotate(-15deg); text-shadow: 0 0 10px rgba(231,76,60,0.5); }
         .label-chosen { position: absolute; top: 20px; left: 20px; padding: 5px 15px; border: 4px solid #2ecc71; color: #2ecc71; border-radius: 10px; font-size: 1.8rem; font-weight: 900; opacity: 0; pointer-events: none; z-index: 20; transform: scale(5); transition: all 0.4s; background: rgba(0,0,0,0.3); }
         .label-chosen.active { opacity: 1; transform: scale(1) rotate(-15deg); }
-        
-
         .close-swiper { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 12px 40px; border-radius: 50px; cursor: pointer; font-weight: bold; backdrop-filter: blur(10px); margin: 20px 0 40px 0; flex-shrink: 0; }
         .card-title { font-size: 1.7rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .card-meta-grid {display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;}
@@ -172,11 +121,6 @@
         .detail-row { color: #eee; }
         .detail-label { color: var(--primary-orange); font-weight: 800; font-size: 0.7rem; text-transform: uppercase; margin-right: 8px; }
         .summary-quote { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px; }
-
-
-
-
-        
         #no-match-modal {display: none;flex-direction: column;align-items: center;justify-content: center;width: 85%;max-width: 320px; background: rgba(255, 255, 255, 0.1);backdrop-filter: blur(30px);border: 1px solid rgba(255, 255, 255, 0.2);border-radius: 32px;padding: 40px 20px;text-align: center;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index: 500;}
         .modal-retry-btn {background: linear-gradient(135deg, #FF8533, #FF6600);color: white;border: none;padding: 15px 40px;border-radius: 50px;font-weight: bold;font-size: 1rem;cursor: pointer;margin-top: 20px;}
         .hide-field { display: none !important; }
@@ -189,9 +133,7 @@
         <p style="font-size: 0.85rem; color: #888; margin-top: -5px;">請依照引導開啟 Google 雲端權限</p>
         
         <button id="toggle-guide-btn" onclick="toggleApiGuide()">📖 查看快速申請教學</button>
-        
-        <!-- 教學框內容完全回歸你原本的標籤結構 -->
-        <div id="api-guide-box">
+                <div id="api-guide-box">
             <div class="guide-steps">
                 <div class="step-title" style="margin-bottom: 8px;"><span class="step-num">1</span> 建立雲端專案</div>
                 <a href="https://console.cloud.google.com/projectcreate" target="_blank" class="step-link-btn">前往 Google Cloud 建立 ➔</a>
@@ -508,7 +450,7 @@
         } else {
             clearInterval(loaderInterval); 
         }
-    }, 7000); // <--- 已從 10000 改為 5000
+    }, 7000); // <--- 已從 10000 改為 7000
 }
        
 async function handleSearchClick() {
