@@ -25,16 +25,35 @@
         .bg-slide.active { opacity: 0.6; }
 
         /* API 設定畫面 */
-        #api-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
-        .api-card { background: rgba(20, 20, 20, 0.95) !important; padding: 30px 25px 25px 25px !important; border-radius: 32px !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 350px; }
-        
+#api-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(15px);
+    z-index: 5000; display: none; align-items: center; justify-content: center;
+    padding: 20px; /* 確保四周有留白，不頂天立地 */
+}        
+.api-card {
+    background: rgba(20, 20, 20, 0.95) !important;
+    padding: 30px 25px 25px 25px !important;
+    border-radius: 32px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: flex; flex-direction: column;
+    width: 100%; max-width: 350px;
+    /* 關鍵修正：限制卡片總高度，多出的部分內部滾動 */
+    max-height: 85vh; 
+    overflow-y: auto;
+    gap: 15px;
+}        
         /* --- 教學框：精緻嵌入、不頂天立地、圓角完整 --- */
         #api-guide-box {
-            display: none; text-align: left; background: rgba(0, 0, 0, 0.45); border-radius: 24px; padding: 20px;
-            margin: 10px 0 15px 0; border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
-            max-height: 380px; overflow-y: auto; 
-        }
+    display: none;
+    text-align: left;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 20px;
+    padding: 15px;
+    margin: 5px 0 10px 0;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
         .guide-steps-container { display: flex; flex-direction: column; gap: 18px; }
         .step-item { display: flex; flex-direction: column; gap: 8px; }
         .step-title { font-size: 0.9rem; font-weight: 700; color: #eee; display: flex; align-items: center; gap: 10px; }
@@ -75,11 +94,19 @@
         #btn-open.selected { background: rgba(46,204,113,0.15); border-color: #2ecc71; color: #2ecc71; }
 
         /* --- 還原：開始探索美食按鈕 180度漸層 --- */
-        .cta-button { 
-            width: 100%; background: linear-gradient(180deg, #FF8533, #FF6600); 
-            border: none; padding: 16px; font-weight: 700; border-radius: 16px; color: #fff; 
-            cursor: pointer; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(255, 102, 0, 0.4); transition: 0.3s; 
-        }
+        .cta-button {
+    width: 100%;
+    background: linear-gradient(180deg, #FF8533, #FF6600); /* 180度漸層 */
+    border: none;
+    padding: 16px; /* 10:02PM 的原始高度 */
+    font-weight: 700;
+    border-radius: 16px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 15px rgba(255, 102, 0, 0.4);
+    transition: 0.3s;
+}
         .usage-hint { font-size: 0.85rem; opacity: 0.7; color: #ffffff; font-weight: 500; margin-top: 8px; }
         .hide-field { display: none !important; }
 
@@ -112,56 +139,46 @@
 <body touch-action="none">
     <div id="api-overlay">
     <div class="api-card">
-        <h2 style="color: #fff;">🔑 探索功能設定</h2>
-        <p style="font-size: 0.85rem; color: #888; margin-top: -10px;">請依照下方引導開啟 Google 雲端權限</p>
-        <button id="toggle-guide-btn" onclick="toggleApiGuide()">📖 查看快速申請教學 (建議首次使用閱讀)</button>
+        <h2 style="color: #fff; margin: 0;">🔑 探索功能設定</h2>
+        <p style="font-size: 0.85rem; color: #888; margin-top: -5px;">請依照引導開啟 Google 雲端權限</p>
+        
+        <button id="toggle-guide-btn" onclick="toggleApiGuide()">📖 查看快速申請教學</button>
+        
+        <!-- 教學框內容完全回歸你原本的標籤結構 -->
         <div id="api-guide-box">
-    <div class="guide-steps-container">
-        <!-- 步驟 1 -->
-        <div class="step-item">
-            <div class="step-title"><span class="step-num">1</span> 建立雲端專案</div>
-            <a href="https://console.cloud.google.com/projectcreate" target="_blank" class="step-link-btn">前往 Google Cloud 建立 ➔</a>
-        </div>
+            <div class="guide-steps">
+                <div class="step-title" style="margin-bottom: 8px;"><span class="step-num">1</span> 建立雲端專案</div>
+                <a href="https://console.cloud.google.com/projectcreate" target="_blank" class="step-link-btn">前往 Google Cloud 建立 ➔</a>
 
-        <!-- 步驟 2 -->
-        <div class="step-item">
-            <div class="step-title"><span class="step-num">2</span> 啟用必要 API 權限</div>
-            <div class="api-tag-container">
-                <a href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank" class="api-tag" style="text-decoration: none;">
-                    <span class="api-tag-name">Places API</span>
-                    <span class="api-tag-desc">獲取地圖數據</span>
-                </a>
-                <a href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" target="_blank" class="api-tag" style="text-decoration: none;">
-                    <span class="api-tag-name">Gemini API</span>
-                    <span class="api-tag-desc">生成推薦理由</span>
-                </a>
+                <div class="step-title" style="margin-top: 15px; margin-bottom: 8px;"><span class="step-num">2</span> 啟用必要 API 權限</div>
+                <div class="api-tag-container" style="display: flex; gap: 8px;">
+                    <a href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank" class="api-tag" style="flex:1; text-align:center; text-decoration:none; background:rgba(255,255,255,0.05); padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,0.1);">
+                        <span style="display:block; color:var(--accent-yellow); font-size:0.75rem; font-weight:800;">Places API</span>
+                    </a>
+                    <a href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" target="_blank" class="api-tag" style="flex:1; text-align:center; text-decoration:none; background:rgba(255,255,255,0.05); padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,0.1);">
+                        <span style="display:block; color:var(--accent-yellow); font-size:0.75rem; font-weight:800;">Gemini API</span>
+                    </a>
+                </div>
+
+                <div class="step-title" style="margin-top: 15px; margin-bottom: 8px;"><span class="step-num">3</span> 產生 API 金鑰 (Key)</div>
+                <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="step-link-btn">建立憑證並複製金鑰 ➔</a>
+
+                <div class="step-title" style="margin-top: 15px; margin-bottom: 5px;"><span class="step-num">4</span> 啟用結算帳戶</div>
+                <p style="font-size: 0.75rem; color: #aaa; margin: 0 0 10px 5px; line-height: 1.4;">
+                    請於 GCP 側邊選單進入「結算」並<b>綁定信用卡</b>。<br>
+                    <span style="color: #ff6666;">*未綁定者，地圖功能將無法回傳資料。</span>
+                </p>
             </div>
-            <!-- 補上 Routes API 提示 -->
-            <p style="font-size: 0.75rem; color: #999; margin: 0 0 0 5px;">* 建議同時啟用 <b>Routes API</b> 以獲得精確距離。</p>
         </div>
 
-        <!-- 步驟 3 -->
-        <div class="step-item">
-            <div class="step-title"><span class="step-num">3</span> 產生 API 金鑰 (Key)</div>
-            <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="step-link-btn">建立憑證並複製金鑰 ➔</a>
-        </div>
-
-        <!-- 步驟 4 (原本被刪除的部分，現在補回) -->
-        <div class="step-item">
-            <div class="step-title"><span class="step-num">4</span> 啟用結算帳戶</div>
-            <p style="font-size: 0.75rem; color: #aaa; margin: 5px 0 0 5px; line-height: 1.4;">
-                請於 GCP 側邊選單進入「結算」並<b>綁定信用卡</b>。<br>
-                <span style="color: #ff6666;">*未綁定者，地圖功能將無法回傳資料。</span>
-            </p>
-        </div>
-    </div>
-</div>
-        <div style="margin-top: 10px;">
-            <div class="api-instruction">貼上您的 API 金鑰：</div>
+        <div style="margin-top: 5px;">
+            <div class="api-instruction" style="text-align: left; font-size: 0.9rem; margin-bottom: 8px;">貼上您的 API 金鑰：</div>
             <input type="password" id="api-key-input" class="api-input" placeholder="AIzaSyBw-xxxxxx...">
         </div>
+
         <button class="api-save-btn" onclick="saveApiKey()">儲存設定並開啟探索</button>
-        <button onclick="document.getElementById('api-overlay').style.display='none'" style="background:none; border:none; color:#777; cursor:pointer; font-size: 0.85rem; margin-top: 25px; padding: 10px; width: 100%; transition: 0.3s;">✕ 暫不設定，返回首頁</button>
+
+        <button onclick="document.getElementById('api-overlay').style.display='none'" style="background:none; border:none; color:#555; cursor:pointer; font-size: 0.85rem; margin-top: 10px;">✕ 暫不設定，返回首頁</button>
     </div>
 </div>
     <div id="bg-container"></div>
