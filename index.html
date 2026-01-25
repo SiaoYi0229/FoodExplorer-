@@ -828,33 +828,41 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return d < 1 ? `${(d * 1000).toFixed(0)}m` : `${d.toFixed(1)}km`;
 }
 
-// 這裡是原本的 function getAiRanking(apiKey, cfg, rawPlaces) { ...
-        
 async function getAiRanking(apiKey, cfg, rawPlaces) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
+    // 預處理資料，讓 AI 更好懂
     const simplifiedList = rawPlaces.map(p => {
-        // --- 修正：前端直接算物理距離，解決 AI 亂猜距離的問題 ---
         let d = calculateDistance(userCoords.lat, userCoords.lng, p.location.latitude, p.location.longitude);
         return {
             name: p.displayName.text,
-            rating: p.rating,
-            reviews: p.userRatingCount,
+            rating: p.rating || "N/A",
+            reviews: p.userRatingCount || 0,
             address: p.formattedAddress,
             place_id: p.id,
-            distance: d, // 帶入精準距離
-            // 抓取今天的營業時間描述
+            distance: d,
             today_hours: p.regularOpeningHours?.weekdayDescriptions?.[new Date().getDay() === 0 ? 6 : new Date().getDay()-1] || "未提供",
             photo_name: p.photos?.[0]?.name || null
         };
     });
 
-    const prompt = `你是美食鑑定家。從名單選 6 家最符「${cfg.food} / ${cfg.purpose} / 預算${cfg.budget}」的餐廳：${JSON.stringify(simplifiedList)}
-    【規則】：
-    1. 必須保留我給你的 distance。
-    2. 價格：依 price_level 給出台幣區間(如$300-$600)。
-    3. 營業時間：直接採用我給的 today_hours。
-    4. 僅回傳 JSON。`;
+    // 關鍵！強制要求 AI 回傳跟你 renderCards 裡一模一樣的欄位
+    const prompt = `你是頂級美食鑑定家。從以下名單選出 6 家最符合「${cfg.food} / ${cfg.purpose} / 預算${cfg.budget}」的餐廳。
+    名單內容：${JSON.stringify(simplifiedList)}
+
+    請嚴格遵守回傳格式，僅回傳一個 JSON 陣列，每個物件必須包含以下欄位，不可遺漏：
+    - name: 餐廳名稱
+    - rating: 評分 (數字)
+    - review_count: 評論數
+    - distance: 請直接使用我給你的 distance 內容 (例如 "800m")
+    - price: 台幣價格區間 (例如 "300-600")
+    - opening_hours: 營業時間
+    - address: 詳細地址
+    - signature: 推薦必點招牌菜
+    - review_summary: 一句話總結評論
+    - reason: 推薦這間店的 AI 分析原因
+    - place_id: 店家的 Google Place ID
+    - photo_name: 請直接保留我給你的 photo_name`;
 
     const response = await fetch(url, {
         method: "POST",
@@ -866,11 +874,17 @@ async function getAiRanking(apiKey, cfg, rawPlaces) {
     });
 
     const result = await response.json();
+    
+    // 安全性檢查
+    if (!result.candidates || !result.candidates[0].content.parts[0].text) {
+        throw new Error("AI 無法產生推薦清單，請稍後再試。");
+    }
+
     const recommendations = JSON.parse(result.candidates[0].content.parts[0].text);
     
+    // 將 AI 回傳的資料加上圖片網址與地圖網址
     return recommendations.map(res => ({
         ...res,
-        // 加大照片解析度，並確保是實體餐廳圖
         photo_url: res.photo_name ? `https://places.googleapis.com/v1/${res.photo_name}/media?key=${apiKey}&maxHeightPx=800` : null,
         map_query: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.name)}&query_place_id=${res.place_id}`
     }));
