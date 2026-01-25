@@ -368,10 +368,26 @@
         function toggleApiGuide() { const box = document.getElementById('api-guide-box'); box.style.display = box.style.display === 'none' ? 'block' : 'none'; }
         function initLocationWatch() { if ("geolocation" in navigator) { navigator.geolocation.watchPosition((pos) => { userCoords.lat = pos.coords.latitude; userCoords.lng = pos.coords.longitude; if (!isNearbyMode) document.getElementById('coords-text').innerText = `📍 ${userCoords.lat.toFixed(4)}, ${userCoords.lng.toFixed(4)}`; }, () => {}, { enableHighAccuracy: true }); } }
         function toggleNearbyMode() {
-            isNearbyMode = !isNearbyMode; const btn = document.getElementById('location-display'); const fields = document.querySelectorAll('.nearby-toggle');
-            if (isNearbyMode) { btn.classList.add('active-mode'); fields.forEach(f => f.classList.add('hide-field')); document.getElementById('mrt-section').style.display = 'none'; document.getElementById('coords-text').innerText = "🎯 搜尋附近 1.5km 內美食"; }
-            else { btn.classList.remove('active-mode'); fields.forEach(f => f.classList.remove('hide-field')); checkTransAvailability(); document.getElementById('coords-text').innerText = userCoords.lat ? `📍 ${userCoords.lat.toFixed(4)}, ${userCoords.lng.toFixed(4)}` : "正在取得 GPS 座標..."; }
-        }
+    isNearbyMode = !isNearbyMode; 
+    const btn = document.getElementById('location-display'); 
+    const fields = document.querySelectorAll('.nearby-toggle'); // 關鍵：選取所有需要隱藏的欄位
+    const mrtSec = document.getElementById('mrt-section');
+    const coordsText = document.getElementById('coords-text');
+
+    if (isNearbyMode) { 
+        // 進入 GPS 附近模式：隱藏縣市、行政區、交通偏好
+        btn.classList.add('active-mode'); 
+        fields.forEach(f => f.classList.add('hide-field')); 
+        mrtSec.style.display = 'none'; 
+        coordsText.innerText = "🎯 搜尋附近 1.5km 內美食"; 
+    } else { 
+        // 回到一般模式：顯示欄位
+        btn.classList.remove('active-mode'); 
+        fields.forEach(f => f.classList.remove('hide-field')); 
+        checkTransAvailability(); // 依照原本的交通選單狀態決定是否顯示站點
+        coordsText.innerText = userCoords.lat ? `📍 ${userCoords.lat.toFixed(4)}, ${userCoords.lng.toFixed(4)}` : "正在取得 GPS 座標..."; 
+    }
+}
         function updateDistricts() { const city = document.getElementById('city').value; document.getElementById('district').innerHTML = cityData[city].map(d => `<option value="${d}">${d}</option>`).join(''); checkTransAvailability(); }
         function checkTransAvailability() {
             const city = document.getElementById('city').value;
