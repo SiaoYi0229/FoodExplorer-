@@ -31,7 +31,7 @@
         .step-link-btn:hover { background: var(--accent-yellow); color: #000; }
         .api-tag-container {display: flex;gap: 8px;margin-bottom: 12px;}
         .api-tag {flex: 1;background: rgba(0, 0, 0, 0.4);padding: 8px;border-radius: 10px;text-align: center;border: 1px solid rgba(255, 255, 255, 0.1);}
-        .api-card {background: rgba(20, 20, 20, 0.95) !important;padding: 40px 28px !important;border-radius: 32px !important;border: 1px solid rgba(255, 255, 255, 0.08) !important;gap: 20px !important;}
+        .api-card {background: rgba(20, 20, 20, 0.95) !important;padding: 40px 28px 25px 28px !important;border-radius: 32px !important;border: 1px solid rgba(255, 255, 255, 0.08) !important;gap: 15px !important; }
         #api-guide-box {text-align: left;background: rgba(0, 0, 0, 0.4);border-radius: 20px;padding: 24px;margin: 10px 0;border: 1px solid rgba(255, 255, 255, 0.05) !important;display: none;box-shadow: inset 0 0 20px rgba(0,0,0,0.5);}
         .step-title {font-size: 0.9rem;font-weight: 700;color: #eee;margin-bottom: 8px;display: flex;align-items: center;gap: 10px;}
         .step-num {background: linear-gradient(135deg, var(--primary-orange), #FF8533);color: #fff;width: 22px; height: 22px;border-radius: 6px;display: flex; align-items: center; justify-content: center;font-size: 0.75rem; font-weight: 800;}
@@ -174,7 +174,7 @@
             <input type="password" id="api-key-input" class="api-input" placeholder="AIzaSyBw-xxxxxx...">
         </div>
         <button class="api-save-btn" onclick="saveApiKey()">儲存設定並開啟探索</button>
-        <button onclick="document.getElementById('api-overlay').style.display='none'" style="background:none; border:none; color:#555; cursor:pointer; font-size: 0.85rem; margin-top: 5px;">✕ 暫不設定，返回首頁</button>
+        <button onclick="document.getElementById('api-overlay').style.display='none'" style="background:none; border:none; color:#777; cursor:pointer; font-size: 0.85rem; margin-top: 25px; padding: 10px; width: 100%; transition: 0.3s;">✕ 暫不設定，返回首頁</button>
     </div>
 </div>
     <div id="bg-container"></div>
@@ -480,6 +480,10 @@
     };
 
     if (getUsageCount() >= DAILY_LIMIT) { alert("🚫 今日探索次數已滿。"); return; }
+    startSearch(apiKey, config);
+}
+
+
 
     // 恢復您第一份的嚴格驗證邏輯
      if (!isNearbyMode) {
@@ -568,7 +572,7 @@
 
     const requestBody = {
         textQuery: query,
-        maxResultCount: 15,
+        maxResultCount: cfg.isHidden ? 20 : 12, // 隱藏版模式多抓一點來給 AI 篩選
         languageCode: "zh-TW",
         regionCode: "TW",
         openNow: cfg.isOpenOnly
@@ -659,7 +663,20 @@ async function getAiRanking(apiKey, cfg, rawPlaces) {
     });
 
     // 2. 強化版 Prompt：要求 AI 展現專業鑑定水準，但不要處理 photo
-    const prompt = `你是頂級美食鑑定家。請從提供的名單中，挑選出 6 家最符合「${cfg.food}」需求、適合「${cfg.purpose}」、且預算約在「${cfg.budget}」的餐廳。
+    const hiddenGemInstruction = cfg.isHidden ? 
+    `【重點任務：隱藏版模式已開啟】
+    1. 優先挑選名單中「評論數較少（例如少於 200 則）」但「評分極高（例如 4.3 以上）」的店。
+    2. 優先選擇地址在「巷、弄」內，或描述中提到是私廚、小店的店家。
+    3. 嚴禁推薦跨國連鎖店或百貨公司內的大型餐廳。` : 
+    `【正常模式：挑選最熱門且穩定的優質餐廳】`;
+
+    const prompt = `你是頂級美食鑑定家。請從名單挑選 6 家最符「${cfg.food} / ${cfg.purpose}」的店。
+    
+    ${hiddenGemInstruction}
+    
+    名單數據：${JSON.stringify(detailedList)}
+    
+    僅回傳 JSON 陣列，欄位：name, rating, review_count, distance (用 real_distance), price, opening_hours, address, signature, review_summary, reason, place_id。`;
 
     名單數據：${JSON.stringify(simplifiedList)}
 
