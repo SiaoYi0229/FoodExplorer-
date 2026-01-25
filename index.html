@@ -108,33 +108,47 @@
         .loader-text {margin-top: 50px;color: #fff;font-size: 1.15rem;font-weight: 600;letter-spacing: 2px;text-align: center;min-height: 1.5em;border-right: 3px solid var(--primary-orange);padding-right: 8px;white-space: nowrap;overflow: hidden;animation: cursor-blink 0.8s infinite;}
         @keyframes cursor-blink {0%, 100% { border-color: transparent; }50% { border-color: var(--primary-orange); }}
         /* --- 卡片疊加與滑動系統系統 (高質感原版) --- */
-         #swiper-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; 
-            display: none; flex-direction: column; align-items: center; 
-            background: radial-gradient(circle at center, rgba(30, 40, 50, 0.6) 0%, rgba(10, 15, 20, 0.85) 100%);
-            backdrop-filter: blur(25px); overflow-y: auto; 
-        } 
+        #swiper-overlay { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    z-index: 100; display: none; flex-direction: column; align-items: center; 
+    background: radial-gradient(circle at center, rgba(30, 40, 50, 0.6) 0%, rgba(10, 15, 20, 0.85) 100%);
+    backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); 
+    overflow-y: auto; 
+}
         .card-stack { width: 100%; max-width: 360px; padding: 30px 0 50px 0; display: flex; flex-direction: column; align-items: center; gap: 25px; }
         .swipe-card-wrapper { width: 92%; flex-shrink: 0; position: relative; transition: transform 0.4s ease, opacity 0.4s ease; touch-action: pan-y; }
         .swipe-card { 
-            width: 100%; background: rgba(255, 255, 255, 0.08); border-radius: 32px; 
-            border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            display: flex; flex-direction: column; position: relative; overflow: hidden; height: auto;
-        }
+    width: 100%; 
+    background: rgba(255, 255, 255, 0.08); 
+    border-radius: 32px; 
+    border: 1px solid rgba(255, 255, 255, 0.15); 
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    display: flex; flex-direction: column; position: relative; 
+    overflow: hidden; height: auto;
+}
+
 
         /* 關鍵：80px 頂部留白，確保 LIKE/NOPE 標籤不遮擋標題 */
-        .card-content { padding: 80px 24px 24px 24px; display: flex; flex-direction: column; gap: 12px; }
-        .card-title { font-size: 1.7rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); font-weight: 800; margin: 0; line-height: 1.2; }
+.card-content { 
+    padding: 60px 24px 24px 24px; /* 增加頂部 padding (60px) 避開標籤 */
+    display: flex; flex-direction: column; gap: 12px; }
+.card-title { font-size: 1.7rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); } 
+        .detail-row { color: #eee; }
         .info-bar { display: flex; flex-wrap: wrap; gap: 10px; margin: 5px 0; }
         .pill { background: rgba(255, 255, 255, 0.08); padding: 5px 12px; border-radius: 50px; font-size: 0.78rem; font-weight: 600; color: #eee; display: flex; align-items: center; gap: 5px;}
         .pill-orange { background: rgba(255, 102, 0, 0.15); color: var(--primary-orange); }
         .pill-yellow { background: rgba(255, 204, 0, 0.15); color: var(--accent-yellow); }
-        .summary-quote { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px; font-style: italic; color: #bbb; border-left: 3px solid var(--primary-orange); margin: 5px 0;}
+.summary-quote { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px; }
         .card-map-btn { background: var(--primary-orange); color: #fff; text-decoration: none; padding: 14px; border-radius: 14px; text-align: center; font-weight: bold; margin-top: 10px; }
         
-        .swipe-label { position: absolute; top: 40px;padding: 5px 15px; border: 4px solid; border-radius: 12px; font-size: 2.2rem; font-weight: 900; text-transform: uppercase; opacity: 0; pointer-events: none; z-index: 110; }
+.swipe-label { 
+    position: absolute; top: 40px; /* 稍微往下移 */
+    padding: 5px 15px; border: 4px solid; border-radius: 12px; 
+    font-size: 2.2rem; font-weight: 900; text-transform: uppercase; 
+    opacity: 0; pointer-events: none; z-index: 110; 
+}        
         .label-like { right: 25px; color: #2ecc71; border-color: #2ecc71; transform: rotate(15deg); text-shadow: 0 0 10px rgba(46,204,113,0.5); }
-        .label-nope { left: 25px; color: #e74c3c; border-color: #e74c3c; transform: rotate(-15deg); text-shadow: 0 0 10px rgba(231,76,60,0.5); }
+.label-nope { left: 25px; color: #e74c3c; border-color: #e74c3c; transform: rotate(-15deg); text-shadow: 0 0 10px rgba(231,76,60,0.5); }
         .label-chosen { position: absolute; top: 20px; left: 20px; padding: 5px 15px; border: 4px solid #2ecc71; color: #2ecc71; border-radius: 10px; font-size: 1.8rem; font-weight: 900; opacity: 0; pointer-events: none; z-index: 20; transform: scale(5); transition: all 0.4s; background: rgba(0,0,0,0.3); }
         .label-chosen.active { opacity: 1; transform: scale(1) rotate(-15deg); }
         
