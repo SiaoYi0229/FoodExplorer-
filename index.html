@@ -613,7 +613,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 async function getAiRanking(apiKey, cfg, rawPlaces) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     // 1. 第一階段：串接 Google Routes API 獲取「真正走馬路」的距離與時間
     let detailedList = [];
