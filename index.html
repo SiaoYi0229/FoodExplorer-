@@ -34,15 +34,7 @@
         .api-tag {flex: 1;background: rgba(0, 0, 0, 0.4);padding: 8px;border-radius: 10px;text-align: center;border: 1px solid rgba(255, 255, 255, 0.1);}
         .api-card {background: rgba(20, 20, 20, 0.95) !important;padding: 40px 28px !important;border-radius: 32px !important;border: 1px solid rgba(255, 255, 255, 0.08) !important;gap: 20px !important;}
         #api-guide-box {text-align: left;background: rgba(0, 0, 0, 0.4);border-radius: 20px;padding: 24px;margin: 10px 0;border: 1px solid rgba(255, 255, 255, 0.05) !important;display: none;box-shadow: inset 0 0 20px rgba(0,0,0,0.5);}
-        .step-title {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: #eee;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+        .step-title {font-size: 0.9rem;font-weight: 700;color: #eee;margin-bottom: 8px;display: flex;align-items: center;gap: 10px;}
 
 /* 數字圖示優化 */
 .step-num {
@@ -72,8 +64,7 @@
 
 /* API 橫向標籤：現代感卡片設計 */
 .api-tag-container {
-    display: flex; gap: 12px; margin: 15px 0 25px 0;
-}
+    display: flex; gap: 12px; margin: 15px 0 25px 0;}
 
 .api-tag {
     flex: 1;
@@ -251,8 +242,8 @@
     z-index: 100; display: none; flex-direction: column; align-items: center; 
     background: radial-gradient(circle at center, rgba(30, 40, 50, 0.6) 0%, rgba(10, 15, 20, 0.85) 100%);
     backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); 
-    overflow-y: auto; 
-}        .card-stack { width: 100%; max-width: 360px; padding: 30px 0 50px 0; display: flex; flex-direction: column; align-items: center; gap: 25px; }
+    overflow-y: auto; } 
+        .card-stack { width: 100%; max-width: 360px; padding: 30px 0 50px 0; display: flex; flex-direction: column; align-items: center; gap: 25px; }
         .swipe-card-wrapper { width: 92%; flex-shrink: 0; position: relative; transition: transform 0.4s ease, opacity 0.4s ease; touch-action: pan-y; }
         .swipe-card { 
     width: 100%; 
@@ -261,26 +252,19 @@
     border: 1px solid rgba(255, 255, 255, 0.15); 
     box-shadow: 0 20px 40px rgba(0,0,0,0.4);
     display: flex; flex-direction: column; position: relative; 
-    overflow: hidden; height: auto;
-}
+    overflow: hidden; height: auto;}
         .swipe-card::-webkit-scrollbar { display: none; }
-
         .card-badges { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; margin-bottom: 15px; }
         .card-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; }
         .badge-rating { background: var(--accent-yellow); color: #000; }
         .badge-distance { background: var(--primary-orange); color: #fff; }
-
         .info-row { font-size: 0.85rem; display: flex; flex-direction: column; gap: 2px; color: #ddd; line-height: 1.4; margin-bottom: 12px; }
         .info-label { color: var(--primary-orange); font-weight: bold; font-size: 0.72rem; opacity: 0.9; text-transform: uppercase; }
         .card-summary { font-size: 0.88rem; font-style: italic; opacity: 0.85; border-left: 2px solid var(--primary-orange); padding-left: 10px; margin: 5px 0; }
         .card-map-btn { background: var(--primary-orange); color: #fff; text-decoration: none; padding: 12px; border-radius: 14px; text-align: center; font-weight: bold; margin-top: 10px; }
          .swipe-hints { position: absolute; top: 12px; left: 0; width: 100%; display: flex; justify-content: space-between; padding: 0 15px; pointer-events: none; z-index: 5; }
         .hint-item { font-size: 0.65rem; font-weight: bold; color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-.swipe-label { 
-    position: absolute; top: 40px; /* 稍微往下移 */
-    padding: 5px 15px; border: 4px solid; border-radius: 12px; 
-    font-size: 2.2rem; font-weight: 900; text-transform: uppercase; 
-    opacity: 0; pointer-events: none; z-index: 110; }
+        .swipe-label { position: absolute; top: 40px;padding: 5px 15px; border: 4px solid; border-radius: 12px; font-size: 2.2rem; font-weight: 900; text-transform: uppercase; opacity: 0; pointer-events: none; z-index: 110; }
         .label-like { right: 25px; color: #2ecc71; border-color: #2ecc71; transform: rotate(15deg); text-shadow: 0 0 10px rgba(46,204,113,0.5); }
         .label-nope { left: 25px; color: #e74c3c; border-color: #e74c3c; transform: rotate(-15deg); text-shadow: 0 0 10px rgba(231,76,60,0.5); }
         .label-chosen { position: absolute; top: 20px; left: 20px; padding: 5px 15px; border: 4px solid #2ecc71; color: #2ecc71; border-radius: 10px; font-size: 1.8rem; font-weight: 900; opacity: 0; pointer-events: none; z-index: 20; transform: scale(5); transition: all 0.4s; background: rgba(0,0,0,0.3); }
@@ -292,15 +276,13 @@
 .card-title { font-size: 1.7rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
 /* 資訊網格：排列評分、距離、價格、時間 */
 .card-meta-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;
-}
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;}
 .meta-item {
     background: rgba(255, 255, 255, 0.05);
     padding: 8px 10px; border-radius: 10px;
     font-size: 0.75rem; font-weight: 600;
     display: flex; align-items: center; gap: 6px;
-    color: #eee; border: 1px solid rgba(255,255,255,0.05);
-}
+    color: #eee; border: 1px solid rgba(255,255,255,0.05);}
 .meta-item i { color: var(--accent-yellow); font-style: normal; }
 .meta-price { color: var(--accent-yellow); border-color: rgba(255, 204, 0, 0.2); }
 .meta-dist { background: rgba(255, 102, 0, 0.1); color: var(--primary-orange); }
@@ -313,15 +295,13 @@
     background: rgba(255, 102, 0, 0.05);
     border-left: 3px solid var(--primary-orange);
     padding: 10px 12px; border-radius: 0 12px 12px 0;
-    font-size: 0.88rem; font-style: italic; color: #ddd; margin: 15px 0;
-}
+    font-size: 0.88rem; font-style: italic; color: #ddd; margin: 15px 0;}
 
 .swipe-label { z-index: 100 !important; }
 
 .card-content { 
     padding: 60px 24px 24px 24px; /* 增加頂部 padding (60px) 避開標籤 */
-    display: flex; flex-direction: column; gap: 12px; 
-}
+    display: flex; flex-direction: column; gap: 12px; }
 .card-title { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0; line-height: 1.2; }
 .info-bar { display: flex; flex-wrap: wrap; gap: 10px; margin: 5px 0; }
 .pill { background: rgba(255, 255, 255, 0.08); padding: 5px 12px; border-radius: 50px; font-size: 0.78rem; font-weight: 600; color: #eee; display: flex; align-items: center; gap: 5px;}
@@ -514,7 +494,7 @@
     </div>
 
     <script>
-        const DAILY_LIMIT = 15;
+        const DAILY_LIMIT = 20;
         let userCoords = { lat: null, lng: null };
         let isNearbyMode = false;
         let keptRestaurants = []; 
