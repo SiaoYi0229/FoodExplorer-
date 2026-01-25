@@ -319,7 +319,8 @@
         .label-nope { left: 20px; color: #e74c3c; border-color: #e74c3c; transform: rotate(-15deg); }
         .label-chosen { position: absolute; top: 20px; left: 20px; padding: 5px 15px; border: 4px solid #2ecc71; color: #2ecc71; border-radius: 10px; font-size: 1.8rem; font-weight: 900; opacity: 0; pointer-events: none; z-index: 20; transform: scale(5); transition: all 0.4s; background: rgba(0,0,0,0.3); }
         .label-chosen.active { opacity: 1; transform: scale(1) rotate(-15deg); }
-
+        card-photo-container {width: 100%; height: 220px; /* 增加高度，不再是一小條 */border-radius: 16px; overflow: hidden; margin-bottom: 15px; background: #000; border: 1px solid rgba(255,255,255,0.1)}
+        .card-photo-container img {width: 100%; height: 100%; object-fit: cover; /* 確保照片填滿且不變形 */}
         .close-swiper { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 12px 40px; border-radius: 50px; cursor: pointer; font-weight: bold; backdrop-filter: blur(10px); margin: 20px 0 40px 0; flex-shrink: 0; }
     </style>
 </head>
@@ -842,32 +843,28 @@ function updateLoaderText(stage) {
         const card = document.createElement('div'); card.className = 'swipe-card';
         
         card.innerHTML = `
-            <!-- 恢復：原本的滑動標籤設計 -->
             <div class="swipe-hints"><div class="hint-item">← NOPE</div><div class="hint-item">LIKE →</div></div>
             <div class="swipe-label label-like">LIKE</div>
             <div class="swipe-label label-nope">NOPE</div>
             <div class="label-chosen">🏆 最終首選</div>
 
-            <!-- 修正：嚴格執行有照片才顯示，沒照片直接消失 -->
             ${res.photo_url ? `
-                <div style="width:100%; height:170px; border-radius:14px; overflow:hidden; margin-bottom:12px;">
-                    <img src="${res.photo_url}" style="width:100%; height:100%; object-fit:cover;">
+                <div class="card-photo-container">
+                    <img src="${res.photo_url}">
                 </div>` : ''}
 
             <h3 style="margin:0;">${res.name}</h3>
             <div class="card-badges">
-                <span class="card-badge badge-rating">⭐ googl評分${res.rating} (${res.review_count})</span>
-                <span class="card-badge badge-price">💰 價位 NT$ ${res.price}</span>
+                <span class="card-badge badge-rating">⭐ ${res.rating} (${res.review_count})</span>
                 <span class="card-badge badge-distance">📍 距離 ${res.distance}</span>
             </div>
             <div style="font-size:0.75rem;color:#aaa;margin-bottom:10px;">🏠 ${res.address}</div>
-            <div class="info-row"><span class="info-label">🔥必點招牌</span><span>${res.signature}</span></div>
-            <div class="info-row"><span class="info-label">🕒 營業時間</span><span>${res.opening_hours}</span></div>
+            <div class="info-row"><span class="info-label">🔥 招牌</span><span>${res.signature}</span></div>
             <div class="card-summary">"${res.review_summary}"</div>
             <div class="info-row" style="margin-top:5px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
-                <span class="info-label">💡 推薦原因</span><span style="color:var(--accent-yellow)">${res.reason}</span>
+                <span class="info-label">💡 推薦理由</span><span style="color:var(--accent-yellow)">${res.reason}</span>
             </div>
-            <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 打開地圖查看詳情</a>
+            <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 打開地圖</a>
         `;
         
         wrapper.appendChild(card); 
