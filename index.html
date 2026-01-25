@@ -153,127 +153,76 @@
         .cta-button { width: 100%; background: linear-gradient(180deg, #FF8533, #FF6600); border: none; padding: 16px; font-weight: 700; border-radius: 16px; color: #fff; cursor: pointer; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(255, 102, 0, 0.4); transition: 0.3s; }
         .usage-hint { font-size: 0.85rem; opacity: 0.7; color: #ffffff; font-weight: 500; flex: 0 0 auto; margin-top: 8px; }
 
-       /* --- 頂級 UI 調製：極致精簡全息虹膜 --- */
-/* --- 頂級全息能量 Loader --- */
+       /* --- 恢復：頂級精簡全息虹膜 --- */
 #loader {
     display: none;
     position: fixed;
     top: 0; left: 0;
     width: 100vw; height: 100vh;
-    z-index: 20000;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(40px) saturate(180%);
-    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.7); /* 深色遮罩 */
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
     flex-direction: column; align-items: center; justify-content: center;
 }
 
-.loader-visual {
+.resonance-container {
     position: relative;
-    width: 250px; height: 250px;
+    width: 200px; height: 200px;
     display: flex; align-items: center; justify-content: center;
-    margin-bottom: 40px;
 }
 
-/* 核心能量球 */
-.orb-core {
-    width: 80px; height: 80px;
-    background: radial-gradient(circle at 30% 30%, var(--accent-yellow), var(--primary-orange));
+/* 核心呼吸點 */
+.core-dot {
+    width: 12px; height: 12px;
+    background: var(--primary-orange);
     border-radius: 50%;
-    box-shadow: 0 0 50px var(--primary-orange), inset 0 0 20px rgba(255,255,255,0.5);
-    animation: orb-breath 3s ease-in-out infinite, orb-rotate 8s linear infinite;
-    z-index: 5;
+    box-shadow: 0 0 30px var(--primary-orange);
+    animation: core-breath 2s ease-in-out infinite;
+    z-index: 10;
 }
 
-/* 旋轉掃描環 */
-.scanning-ring {
+/* 虹膜擴散波紋 */
+.resonance-wave {
     position: absolute;
-    width: 160px; height: 160px;
-    border: 1px solid rgba(255, 102, 0, 0.3);
-    border-top: 2px solid var(--accent-yellow);
-    border-radius: 50%;
-    animation: ring-rotate 1.5s linear infinite;
-}
-
-.scanning-ring::before {
-    content: '';
-    position: absolute;
-    top: -5px; left: 50%;
-    width: 10px; height: 10px;
-    background: var(--accent-yellow);
-    border-radius: 50%;
-    box-shadow: 0 0 15px var(--accent-yellow);
-}
-
-/* 漂浮微粒 */
-.floating-particles span {
-    position: absolute;
-    width: 4px; height: 4px;
-    background: #fff;
+    border: 1.5px solid var(--primary-orange);
     border-radius: 50%;
     opacity: 0;
-    filter: blur(1px);
+    animation: wave-expand 3s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
 }
 
-.floating-particles span:nth-child(1) { top: 10%; left: 20%; animation: particle-float 4s infinite 0.5s; }
-.floating-particles span:nth-child(2) { top: 80%; left: 30%; animation: particle-float 5s infinite 1s; }
-.floating-particles span:nth-child(3) { top: 40%; left: 80%; animation: particle-float 3s infinite 0.2s; }
-.floating-particles span:nth-child(4) { top: 70%; left: 70%; animation: particle-float 6s infinite 1.5s; }
+.resonance-wave:nth-child(2) { animation-delay: 0.8s; }
+.resonance-wave:nth-child(3) { animation-delay: 1.6s; }
 
-/* 載入資訊排版 */
-.loader-info { text-align: center; }
+@keyframes core-breath {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.4); opacity: 1; box-shadow: 0 0 45px var(--primary-orange); }
+}
+
+@keyframes wave-expand {
+    0% { width: 10px; height: 10px; opacity: 0; transform: scale(1); }
+    10% { opacity: 0.5; }
+    100% { width: 220px; height: 220px; opacity: 0; transform: scale(1.1); border-width: 0.5px; }
+}
 
 .loader-text {
+    margin-top: 50px;
     color: #fff;
-    font-size: 1.2rem;
-    font-weight: 700;
+    font-size: 1.15rem;
+    font-weight: 600;
     letter-spacing: 2px;
-    margin-bottom: 15px;
-    text-shadow: 0 0 10px rgba(255,255,255,0.3);
-}
-
-/* 模擬進度條 */
-.progress-bar-container {
-    width: 180px; height: 3px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 10px;
+    text-align: center;
+    min-height: 1.5em;
+    border-right: 3px solid var(--primary-orange);
+    padding-right: 8px;
+    white-space: nowrap;
     overflow: hidden;
-    margin: 0 auto;
+    animation: cursor-blink 0.8s infinite;
 }
 
-.progress-fill {
-    width: 0%; height: 100%;
-    background: linear-gradient(90deg, var(--primary-orange), var(--accent-yellow));
-    box-shadow: 0 0 10px var(--primary-orange);
-    animation: progress-load 15s ease-out forwards;
-}
-
-/* 動畫定義 */
-@keyframes orb-breath {
-    0%, 100% { transform: scale(1); filter: brightness(1); }
-    50% { transform: scale(1.15); filter: brightness(1.3); }
-}
-
-@keyframes orb-rotate {
-    from { filter: hue-rotate(0deg); }
-    to { filter: hue-rotate(360deg); }
-}
-
-@keyframes ring-rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-@keyframes particle-float {
-    0% { transform: translateY(0); opacity: 0; }
-    50% { opacity: 0.6; }
-    100% { transform: translateY(-100px); opacity: 0; }
-}
-
-@keyframes progress-load {
-    0% { width: 0%; }
-    20% { width: 30%; }
-    50% { width: 70%; }
-    100% { width: 95%; } /* 永遠停在 95% 直到 API 回傳 */
+@keyframes cursor-blink {
+    0%, 100% { border-color: transparent; }
+    50% { border-color: var(--primary-orange); }
 }
 /* --- 頂級打字機動效 --- */
 .loader-text {
@@ -434,19 +383,14 @@
     <div id="bg-container"></div>
 
    <div id="loader">
-    <div class="loader-visual">
-        <div class="orb-core"></div>
-        <div class="scanning-ring"></div>
-        <div class="floating-particles">
-            <span></span><span></span><span></span><span></span>
-        </div>
+    <div class="resonance-container">
+        <div class="resonance-wave"></div>
+        <div class="resonance-wave"></div>
+        <div class="resonance-wave"></div>
+        <div class="core-dot"></div>
     </div>
-    <div class="loader-info">
-        <p id="loader-text" class="loader-text">正在取得 GPS 座標...</p>
-        <div class="progress-bar-container">
-            <div class="progress-fill"></div>
-        </div>
-    </div>
+    <p id="loader-text" class="loader-text">正在同步您的地理座標...</p>
+</div>
 </div>
 
     <div class="container" id="main-ui">
@@ -790,75 +734,62 @@ function runTypingEffect() {
         async function startSearch(apiKey, config) {
     const loader = document.getElementById('loader');
     const btn = document.getElementById('search-btn');
-    const progressFill = document.querySelector('.progress-fill');
     
-    // --- 1. 初始化 UI 狀態 ---
-    // 強制重置進度條動畫，讓它每次搜尋都從 0% 開始跑
-    progressFill.style.animation = 'none';
-    progressFill.offsetHeight; // 觸發重繪 (Reflow)
-    progressFill.style.animation = null; 
-
-    // 顯示全息載入畫面並啟動打字機效果
+    // 啟動 UI 載入狀態
     loader.style.display = 'flex';
-    runTypingEffect();
+    runTypingEffect(); // 啟動打字機動效
     btn.disabled = true;
 
     try {
-        // --- 2. 第一階段：獲取 Google Maps 原始數據 ---
-        // 這裡會包含物理距離限制與關鍵字優化
+        // --- 第一階段：獲取 Google 地圖原始數據 ---
         const rawPlaces = await fetchRealPlaces(apiKey, config);
         
         if (!rawPlaces || rawPlaces.length === 0) {
-            throw new Error("在該區域找不到符合條件的店家，請嘗試放寬搜尋條件。");
+            throw new Error("在該區域找不到符合條件的店家，請放寬搜尋條件。");
         }
 
-        // --- 3. 第二階段：啟動 Gemini AI 深度鑑定 ---
-        // 將原始資料交給 AI 進行篩選、分析原因、總結評論並模擬走路距離
+        // --- 第二階段：進行 AI 鑑定與理由生成 ---
         const finalRecommendations = await getAiRanking(apiKey, config, rawPlaces);
 
-        // --- 4. 第三階段：渲染結果 ---
+        // --- 第三階段：渲染結果 ---
         if (finalRecommendations && finalRecommendations.length > 0) {
-            // 搜尋成功，增加今日使用次數
+            // 搜尋成功才增加使用次數
             incrementUsage();
             
-            // 重置內部狀態
+            // 重置滑動系統所需的狀態
             keptRestaurants = []; 
             isFinalOne = false;
             
-            // 呼叫渲染函式 (現在排版已優化，不會擋到標題)
+            // 執行卡片渲染
             renderCards(finalRecommendations);
-        } else {
-            throw new Error("AI 無法產生推薦，請確認網路連線或稍後再試。");
         }
-
     } catch (e) {
-        // --- 5. 異常處理 (提供開發者級別的精準提示) ---
-        console.error("探索出錯：", e);
+        console.error("探索過程發生錯誤:", e);
         let errorMsg = e.message;
-
-        // 針對常見 API 錯誤進行分類引導
+        
+        // 這是你最關鍵的邏輯：精準導引用戶去修復 API 設定
         if (errorMsg.includes("Places API")) {
-            errorMsg = "❌ Google Places 權限未開啟！\n請確認您的 API Key 已啟用 Places API (New) 並綁定結算帳戶。";
+            errorMsg = "❌ 地圖權限未開啟！\n請點擊右上角⚙️進入設定，點擊教學中的「Places API」連結並啟用，並確認已綁定結算帳戶。";
         } else if (errorMsg.includes("Generative Language") || errorMsg.includes("Gemini")) {
-            errorMsg = "❌ Gemini AI 服務異常！\n請檢查 API Key 是否正確，或 Gemini API 權限是否已在 Google Cloud 啟用。";
+            errorMsg = "❌ AI 權限未開啟！\n請點擊右上角⚙️進入設定，點擊教學中的「Gemini API」連結並啟用。";
+        } else if (errorMsg.includes("Candidates")) {
+            errorMsg = "❌ AI 無法產生推薦，通常是因為 API Key 尚未生效或結算帳戶 (信用卡) 有問題。";
         } else if (errorMsg.includes("quota")) {
-            errorMsg = "⚠️ API 額度已達上限，請明天再試或更換 API Key。";
+            errorMsg = "⚠️ API 額度已達上限，請明天再試或更換 Key。";
         }
-
+        
         alert(errorMsg);
-
     } finally {
-        // --- 6. 結束清理 ---
-        // 清除所有計時器，防止記憶體洩漏與文字跳動
+        // --- 結束清理：這部分非常重要 ---
+        // 停止打字機的所有 Interval，避免背景持續運算
         if (loaderInterval) clearInterval(loaderInterval);
         if (typingTimer) clearInterval(typingTimer);
         
-        // 關閉載入畫面，恢復按鈕
+        // 關閉載入畫面，恢復按鈕功能
         loader.style.display = 'none';
         btn.disabled = false;
     }
 }
-
 
 
         async function fetchRealPlaces(apiKey, cfg) {
