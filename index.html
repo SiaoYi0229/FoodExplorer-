@@ -95,11 +95,13 @@
         .card-content { padding: 85px 24px 24px 24px; display: flex; flex-direction: column; gap: 18px; }
         .card-title { font-size: 1.7rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); font-weight: 800; margin: 0; line-height: 1.2; }
         .detail-row {font-size: 0.85rem;color: #ccc;line-height: 1.5;margin-bottom: 6px;}        
-        .info-bar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-        ..pill { display: inline-flex;align-items: center;width: fit-content; background: rgba(255, 255, 255, 0.08); padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: bold;color: #fff;}
-        .pill-yellow { background: #FFCC00 !important; color: #000 !important; }
-        .pill-orange { background: #FF6600 !important; color: #fff !important; }
-        .summary-quote { font-style: italic; color: #cecece; background: rgba(255, 255, 255, 0.05) !important; /* 確保背景深色 */border-left: 4px solid rgba(255, 255, 255, 0.3) !important; /* 核心：改為灰色條 */padding: 15px 20px; border-radius: 4px 18px 18px 4px;margin: 20px 0; font-size: 0.95rem; line-height: 1.7;}
+.summary-quote { 
+    font-style: italic; color: #cecece; 
+    background: rgba(255, 255, 255, 0.06) !important; 
+    border: none !important; /* 核心修正：徹底拔除邊線 */
+    padding: 16px 20px; border-radius: 18px;
+    margin: 15px 0; font-size: 0.9rem; line-height: 1.6;
+}
         .card-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; display: inline-block; margin-right: 5px; }
         .badge-rating { background: var(--accent-yellow); color: #000; }
         .badge-distance { background: var(--primary-orange); color: #fff; }
@@ -126,13 +128,15 @@
         .swipe-label { z-index: 100 !important; }
         .card-content { padding: 60px 24px 24px 24px;display: flex; flex-direction: column; gap: 12px; }
         .card-title { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0; line-height: 1.2; }
-        .info-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+info-bar { 
+    display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px; margin: 12px 0; 
+}
         .pill-time { background: rgba(255, 255, 255, 0.05);color: #bbb;}
         .pill-orange { color: var(--primary-orange); background: rgba(255, 102, 0, 0.12); border-color: rgba(255, 102, 0, 0.2); }
-        .pill-orange { background: rgba(255, 102, 0, 0.15); color: var(--primary-orange); }
-        .pill-yellow { background: rgba(255, 204, 0, 0.15); color: var(--accent-yellow); }
-        .detail-row { color: #eee; }
-        .detail-label { color: var(--primary-orange); font-weight: 800; font-size: 0.95rem;text-transform: uppercase; display: block;margin-bottom: 4px;letter-spacing: 1px;}
+.pill-orange { background: #FF6600 !important; color: #fff !important; }
+        .pill-yellow { background: #FFCC00 !important; color: #000 !important; }
+        .detail-row { font-size: 0.88rem; color: #ddd; line-height: 1.5; margin-bottom: 8px; display: flex; align-items: flex-start; }
+.detail-label { color: var(--primary-orange); font-weight: 800; font-size: 0.88rem; margin-right: 8px; flex-shrink: 0; }
         .summary-quote { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px; font-style: italic; color: #bbb; border-left: 3px solid var(--primary-orange); margin: 5px 0;}
         #no-match-modal {display: none;flex-direction: column;align-items: center;justify-content: center;width: 85%;max-width: 320px; background: rgba(255, 255, 255, 0.1);backdrop-filter: blur(30px);border: 1px solid rgba(255, 255, 255, 0.2);border-radius: 32px;padding: 40px 20px;text-align: center;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index: 500;}
         .modal-retry-btn {background: linear-gradient(135deg, #FF8533, #FF6600);color: white;border: none;padding: 15px 40px;border-radius: 50px;font-weight: bold;font-size: 1rem;cursor: pointer;margin-top: 20px;}
