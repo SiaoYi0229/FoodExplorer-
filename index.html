@@ -726,34 +726,38 @@ function renderCards(restaurants) {
             <div class="swipe-label label-nope">NOPE</div>
             <div class="label-chosen">🏆 最終首選</div>
 
-            <div class="card-content" style="padding:30px 25px;">
-                <h3 style="margin:0 0 15px 0; font-size:1.7rem; color:#fff;">${res.name}</h3>
+            <div class="card-content" style="padding:35px 25px;">
+                <h2 style="margin:0 0 15px 0; font-size:1.8rem; color:#fff; font-weight:800; line-height:1.2;">${res.name}</h2>
                 
+                <!-- Pills 橫向排列區區 -->
                 <div class="info-bar">
-                    <div class="pill pill-yellow">⭐ googl評分 ${res.rating} (${res.review_count})</div>
-                    <div class="pill pill-orange">📍 距離 ${res.distance}</div>
-                    <div class="pill">💰 價位 ${res.price}</div>
+                    <span class="pill pill-yellow">⭐ googl評分 ${res.rating} (${res.review_count})</span>
+                    <span class="pill pill-orange">📍 距離 ${res.distance}</span>
+                    <span class="pill" style="background:rgba(255,255,255,0.12);">💰 價位 ${res.price}</span>
                 </div>
                 
-                <div style="font-size:0.9rem; color:#bbb; margin: 15px 0 10px 0;">🕒 營業時間 ${res.opening_hours}</div>
-                
-                <div style="margin-bottom:20px;">
-                    <div class="detail-row"><span class="detail-label" style="font-size:1rem;">🏠 地址</span></div>
-                    <div style="color:#ddd; font-size:0.9rem; margin-bottom:10px;">${res.address}</div>
-                    
-                    <div class="detail-row"><span class="detail-label" style="font-size:1rem;">🔥 必點招牌</span></div>
-                    <div style="color:#ddd; font-size:0.9rem;">${res.signature}</div>
+                <div style="font-size:0.95rem; color:#bbb; margin: 20px 0 25px 0; display:flex; align-items:center; gap:10px;">
+                    <span>🕒 營業時間</span><span>${res.opening_hours}</span>
                 </div>
                 
-                <!-- 核心修正：移除橘色邊條 -->
+                <div class="detail-row">
+                    <span class="detail-label">🏠 詳細地址</span>
+                    <div style="color:#eee; font-size:0.95rem; line-height:1.5;">${res.address}</div>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">🔥 必點招牌</span>
+                    <div style="color:#eee; font-size:0.95rem; line-height:1.5;">${res.signature}</div>
+                </div>
+                
                 <div class="summary-quote">"${res.review_summary}"</div>
 
-                <div style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:20px;">
-                    <div class="detail-row"><span class="detail-label" style="font-size:1rem;">💡 推薦原因</span></div>
-                    <span style="color:var(--accent-yellow); font-size:0.95rem; line-height:1.6;">${res.reason}</span>
+                <div style="margin-top:25px; border-top:1px solid rgba(255,255,255,0.1); padding-top:25px;">
+                    <span class="detail-label">💡 推薦原因</span>
+                    <div style="color:var(--accent-yellow); font-size:1rem; line-height:1.7; font-weight:500;">${res.reason}</div>
                 </div>
 
-                <a class="card-map-btn" href="${res.map_query}" target="_blank" style="margin-top:25px;">🗺️ 打開地圖查看詳情</a>
+                <a class="card-map-btn" href="${res.map_query}" target="_blank" style="margin-top:35px; height:55px; display:flex; align-items:center; justify-content:center; border-radius:16px;">🗺️ 打開地圖查看詳情</a>
             </div>
         `;
         wrapper.appendChild(card); stack.insertBefore(wrapper, stack.firstChild); initSwipe(card, wrapper, res);
