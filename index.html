@@ -715,11 +715,12 @@ async function getAiRanking(apiKey, cfg, rawPlaces) {
 
     const recommendations = JSON.parse(result.candidates[0].content.parts[0].text);
     
-    // 直接連結到 Google Maps 店家頁面
+    // 關鍵修正：必須有 return 和 map 函式，否則程式會崩潰
+    return recommendations.map(res => ({
+        ...res,
         map_query: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.name)}&query_place_id=${res.place_id}`
     }));
 }
-        
         // --- 修改後的卡片渲染函式 ---
 function renderCards(restaurants) {
     document.getElementById('main-ui').classList.add('blur-mode');
