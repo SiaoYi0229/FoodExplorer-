@@ -590,7 +590,7 @@ async function handleSearchClick() {
     return data.places || [];
 }
 
-// --- 新增：物理距離計算函式 ---
+// --- 修正後的物理距離計算函式 ---
 function calculateDistance(lat1, lon1, lat2, lon2) {
     if (!lat1 || !lon1 || !lat2 || !lon2) return "未知距離";
     const R = 6371; 
@@ -601,18 +601,16 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
               Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     
-    // 關鍵修正：直線距離 * 1.4 (道路轉折係數) = 模擬走路距離
     let d = R * c * 1.4; 
     
     if (d < 1) {
         let meters = (d * 1000).toFixed(0);
-        // 四捨五入到十位數，看起來更真實
         meters = Math.ceil(meters / 10) * 10;
         return `🚶 步行約 ${meters}m`;
     } else {
-        return `🚶 步行約 ${d.toFixed(1)}km`; 
+        return `🚶 步行約 ${d.toFixed(1)}km`;
     }
-}
+} // <--- 補上這個括號，解決 "not defined" 的關鍵
     
 
 
