@@ -610,7 +610,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
         meters = Math.ceil(meters / 10) * 10;
         return `🚶 步行約 ${meters}m`;
     } else {
-        return `🚶 步行約 ${d.toFixed(1)}km`;
+        return `🚶 步行約 ${d.toFixed(1)}km`; } 
     
 
 
@@ -726,6 +726,7 @@ async function getAiRanking(apiKey, cfg, rawPlaces) {
         map_query: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.name)}&query_place_id=${res.place_id}`
     }));
 }
+     } 
         // --- 修改後的卡片渲染函式 ---
 function renderCards(restaurants) {
     document.getElementById('main-ui').classList.add('blur-mode');
