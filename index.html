@@ -95,21 +95,15 @@
         .card-content { padding: 85px 24px 24px 24px; display: flex; flex-direction: column; gap: 18px; }
         .card-title { font-size: 1.7rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); font-weight: 800; margin: 0; line-height: 1.2; }
         .detail-row {font-size: 0.85rem;color: #ccc;line-height: 1.5;margin-bottom: 6px;}        
-        .info-bar { display: flex; flex-wrap: wrap; gap: 10px; margin: 5px 0; }
-        .pill { background: rgba(255, 255, 255, 0.08); padding: 5px 12px; border-radius: 50px; font-size: 0.78rem; font-weight: 600; color: #eee; display: flex; align-items: center; gap: 5px;}
-        .pill-orange { background: rgba(255, 102, 0, 0.15); color: var(--primary-orange); }
-        .pill-yellow { background: rgba(255, 204, 0, 0.15); color: var(--accent-yellow); }
-.summary-quote { 
-    font-style: italic; color: #cecece; 
-    background: rgba(255, 255, 255, 0.05); 
-    border-left: 3px solid rgba(255, 255, 255, 0.3); /* 這裡改為灰色 */
-    padding: 14px 18px; border-radius: 4px 16px 16px 4px;
-    margin: 15px 0; font-size: 0.9rem; line-height: 1.6;
-}        
+        .info-bar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        ..pill { display: inline-flex;align-items: center;width: fit-content; background: rgba(255, 255, 255, 0.08); padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: bold;color: #fff;}
+        .pill-yellow { background: #FFCC00 !important; color: #000 !important; }
+        .pill-orange { background: #FF6600 !important; color: #fff !important; }
+        .summary-quote { font-style: italic; color: #cecece; background: rgba(255, 255, 255, 0.05) !important; /* 確保背景深色 */border-left: 4px solid rgba(255, 255, 255, 0.3) !important; /* 核心：改為灰色條 */padding: 15px 20px; border-radius: 4px 18px 18px 4px;margin: 20px 0; font-size: 0.95rem; line-height: 1.7;}
         .card-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; display: inline-block; margin-right: 5px; }
-.badge-rating { background: var(--accent-yellow); color: #000; }
-.badge-distance { background: var(--primary-orange); color: #fff; }
-.badge-price { background: rgba(255,255,255,0.1); color: #eee; }
+        .badge-rating { background: var(--accent-yellow); color: #000; }
+        .badge-distance { background: var(--primary-orange); color: #fff; }
+        .badge-price { background: rgba(255,255,255,0.1); color: #eee; }
         .card-map-btn { background: var(--primary-orange); color: #fff; text-decoration: none; padding: 14px; border-radius: 14px; text-align: center; font-weight: bold; margin-top: 10px; }
         .swipe-hints { position: absolute; top: 12px; left: 0; width: 100%; display: flex; justify-content: space-between; padding: 0 15px; pointer-events: none; z-index: 5; }
         .hint-item { font-size: 0.65rem; font-weight: bold; color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -650,8 +644,7 @@ async function getAiRanking(apiKey, cfg, rawPlaces) {
             address: p.formattedAddress,
             place_id: p.id,
             price_level: p.priceLevel,
-            real_distance: `📍 距離 ${distStr}`, 
-            // 抓取完整一週的營業時間數據供 AI 總結
+            dist_val: distStr, 
             weekly_hours: p.regularOpeningHours?.weekdayDescriptions || ["未提供完整營業時間"]
         };
     });
@@ -733,34 +726,40 @@ function renderCards(restaurants) {
         const wrapper = document.createElement('div'); wrapper.className = 'swipe-card-wrapper';
         const card = document.createElement('div'); card.className = 'swipe-card';
         
-        // 核心修正：移除照片 HTML，恢復原本的標籤文字
         card.innerHTML = `
             <div class="swipe-hints"><div class="hint-item">← NOPE</div><div class="hint-item">LIKE →</div></div>
             <div class="swipe-label label-like">LIKE</div>
             <div class="swipe-label label-nope">NOPE</div>
             <div class="label-chosen">🏆 最終首選</div>
 
-            <div class="card-content" style="padding:25px;">
-                <h3 style="margin:0 0 10px 0; font-size:1.6rem; color:#fff;">${res.name}</h3>
+            <div class="card-content" style="padding:30px 25px;">
+                <h3 style="margin:0 0 15px 0; font-size:1.7rem; color:#fff;">${res.name}</h3>
                 
-                <div style="margin-bottom:15px;">
-                    <span class="card-badge badge-rating">⭐ googl評分${res.rating} (${res.review_count})</span>
-                    <span class="card-badge badge-distance">📍 距離 ${res.distance}</span>
-                    <span class="card-badge badge-price">💰 價位 NT$${res.price}</span>
+                <div class="info-bar">
+                    <div class="pill pill-yellow">⭐ googl評分 ${res.rating} (${res.review_count})</div>
+                    <div class="pill pill-orange">📍 距離 ${res.distance}</div>
+                    <div class="pill">💰 價位 ${res.price}</div>
                 </div>
                 
-                <div style="font-size:0.85rem; color:#bbb; margin-bottom:10px;">🕒 營業時間 ${res.opening_hours}</div>
-                <div class="detail-row"><span class="detail-label">🏠 地址</span>${res.address}</div>
-                <div class="detail-row"><span class="detail-label">🔥 必點招牌</span>${res.signature}</div>
+                <div style="font-size:0.9rem; color:#bbb; margin: 15px 0 10px 0;">🕒 營業時間 ${res.opening_hours}</div>
                 
+                <div style="margin-bottom:20px;">
+                    <div class="detail-row"><span class="detail-label" style="font-size:1rem;">🏠 地址</span></div>
+                    <div style="color:#ddd; font-size:0.9rem; margin-bottom:10px;">${res.address}</div>
+                    
+                    <div class="detail-row"><span class="detail-label" style="font-size:1rem;">🔥 必點招牌</span></div>
+                    <div style="color:#ddd; font-size:0.9rem;">${res.signature}</div>
+                </div>
+                
+                <!-- 核心修正：移除橘色邊條 -->
                 <div class="summary-quote">"${res.review_summary}"</div>
 
-                <div class="detail-row" style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.05); padding-top:15px;">
-                    <span class="detail-label">💡 推薦原因</span>
-                    <span style="color:var(--accent-yellow); font-weight:600;">${res.reason}</span>
+                <div style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:20px;">
+                    <div class="detail-row"><span class="detail-label" style="font-size:1rem;">💡 推薦原因</span></div>
+                    <span style="color:var(--accent-yellow); font-size:0.95rem; line-height:1.6;">${res.reason}</span>
                 </div>
 
-                <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 打開地圖查看詳情</a>
+                <a class="card-map-btn" href="${res.map_query}" target="_blank" style="margin-top:25px;">🗺️ 打開地圖查看詳情</a>
             </div>
         `;
         wrapper.appendChild(card); stack.insertBefore(wrapper, stack.firstChild); initSwipe(card, wrapper, res);
