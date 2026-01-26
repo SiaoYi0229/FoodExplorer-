@@ -716,9 +716,7 @@ async function getAiRanking(apiKey, cfg, rawPlaces) {
     const recommendations = JSON.parse(result.candidates[0].content.parts[0].text);
     
     // 5. 第五階段：加上自動帶入起點終點的 Google 走路導航網址
-    return recommendations.map(res => ({
-        ...res,
-        map_query: `https://www.google.com/maps/dir/?api=1&origin=${userCoords.lat},${userCoords.lng}&destination=${encodeURIComponent(res.name)}&destination_place_id=${res.place_id}&travelmode=walking`
+     map_query: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.name)}&query_place_id=${res.place_id}`
     }));
 }
         
