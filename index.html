@@ -84,9 +84,9 @@
         .card-stack { width: 100%; max-width: 360px; padding: 30px 0 50px 0; display: flex; flex-direction: column; align-items: center; gap: 25px; }
         .swipe-card-wrapper { width: 92%; flex-shrink: 0; position: relative; transition: transform 0.4s ease, opacity 0.4s ease; touch-action: pan-y; }
         .swipe-card { width: 100%; background: rgba(255, 255, 255, 0.08); border-radius: 32px; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 20px 40px rgba(0,0,0,0.4);display: flex; flex-direction: column; position: relative; overflow: hidden; height: auto;}
-        .card-content { padding: 90px 24px 28px 24px; display: flex; flex-direction: column; gap: 18px; }
-    .card-title { font-size: 1.75rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); font-weight: 800; margin: 0; line-height: 1.2; }
-        .detail-row { display: flex; flex-direction: column; gap: 4px; }
+        .card-content { padding: 85px 24px 24px 24px; display: flex; flex-direction: column; gap: 18px; }
+        .card-title { font-size: 1.7rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); font-weight: 800; margin: 0; line-height: 1.2; }
+        .detail-row { font-size: 0.95rem; line-height: 1.6; color: #eee; }
         .info-bar { display: flex; flex-wrap: wrap; gap: 10px; margin: 5px 0; }
         .pill { background: rgba(255, 255, 255, 0.08); padding: 5px 12px; border-radius: 50px; font-size: 0.78rem; font-weight: 600; color: #eee; display: flex; align-items: center; gap: 5px;}
         .pill-orange { background: rgba(255, 102, 0, 0.15); color: var(--primary-orange); }
@@ -119,9 +119,8 @@
         .pill-orange { background: rgba(255, 102, 0, 0.15); color: var(--primary-orange); }
         .pill-yellow { background: rgba(255, 204, 0, 0.15); color: var(--accent-yellow); }
         .detail-row { color: #eee; }
-        .detail-label { color: var(--primary-orange); font-weight: 800; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
-        .detail-text { color: #eee; font-size: 0.95rem; line-height: 1.5; }
-        .summary-quote { background: rgba(0,0,0,0.25); border-radius: 16px; padding: 15px; font-style: italic; color: #ddd; border-left: 4px solid var(--primary-orange); line-height: 1.6; margin: 5px 0; }
+        .detail-label { color: var(--primary-orange); font-weight: 800; font-size: 0.95rem;text-transform: uppercase; display: block;margin-bottom: 4px;letter-spacing: 1px;}
+        .summary-quote { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px; font-style: italic; color: #bbb; border-left: 3px solid var(--primary-orange); margin: 5px 0;}
         #no-match-modal {display: none;flex-direction: column;align-items: center;justify-content: center;width: 85%;max-width: 320px; background: rgba(255, 255, 255, 0.1);backdrop-filter: blur(30px);border: 1px solid rgba(255, 255, 255, 0.2);border-radius: 32px;padding: 40px 20px;text-align: center;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index: 500;}
         .modal-retry-btn {background: linear-gradient(135deg, #FF8533, #FF6600);color: white;border: none;padding: 15px 40px;border-radius: 50px;font-weight: bold;font-size: 1rem;cursor: pointer;margin-top: 20px;}
         .hide-field { display: none !important; }
@@ -721,6 +720,116 @@ async function getAiRanking(apiKey, cfg, rawPlaces) {
         ...res,
         map_query: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.name)}&query_place_id=${res.place_id}`
     }));
+}async function getAiRanking(apiKey, cfg, rawPlaces) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+    // 1. 第一階段：串接 Google Routes API 獲取「真正走馬路」的距離與時間
+    let detailedList = [];
+    try {
+        const routeResponse = await fetch('https://routes.googleapis.com/distanceMatrix/v1:computeRouteMatrix', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Goog-Api-Key': apiKey,
+                'X-Goog-FieldMask': 'destinationIndex,distanceMeters,duration'
+            },
+            body: JSON.stringify({
+                "origins": [{ "waypoint": { "location": { "latLng": { "latitude": userCoords.lat, "longitude": userCoords.lng }}} }],
+                "destinations": rawPlaces.map(p => ({ "waypoint": { "placeId": p.id } })),
+                "travelMode": "WALK", 
+                "units": "METRIC"
+            })
+        });
+        const routeData = await routeResponse.json();
+
+        // 將 Google 規劃的路徑數據與原始地點資料合併
+        detailedList = rawPlaces.map((p, index) => {
+            const route = routeData.find(r => r.destinationIndex === index);
+            let walkDist = route ? (route.distanceMeters < 1000 ? `${route.distanceMeters}m` : `${(route.distanceMeters/1000).toFixed(1)}km`) : "計算中";
+            let walkTime = route ? `約 ${Math.ceil(parseInt(route.duration) / 60)} 分鐘` : "";
+            
+            return {
+                name: p.displayName.text,
+                rating: p.rating || "N/A",
+                reviews: p.userRatingCount || 0,
+                address: p.formattedAddress,
+                place_id: p.id,
+                real_distance: `🚶 ${walkDist} (${walkTime})`, 
+                // 修改處：從單日改為抓取完整一週的營業時間描述陣列並合併
+                weekly_hours: p.regularOpeningHours?.weekdayDescriptions?.join('\n') || "未提供完整營業時間"
+            };
+        });
+    } catch (e) {
+        console.error("Routes API 失敗，退回物理計算：", e);
+        detailedList = rawPlaces.map(p => ({
+            name: p.displayName.text,
+            rating: p.rating || "N/A",
+            reviews: p.userRatingCount || 0,
+            address: p.formattedAddress,
+            place_id: p.id,
+            real_distance: calculateDistance(userCoords.lat, userCoords.lng, p.location.latitude, p.location.longitude),
+            // 修改處：同上，備援機制也改為完整週時間
+            weekly_hours: p.regularOpeningHours?.weekdayDescriptions?.join('\n') || "未提供完整營業時間"
+        }));
+    }
+
+    // 2. 第二階段：生成「隱藏版」或是「名店模式」的 AI 指令
+    const hiddenGemInstruction = cfg.isHidden ? 
+        `【任務：隱藏版模式】
+        1. 優先挑選名單中評論數較少（如少於 300 則）但評分極高（如 4.3 以上）的小店。
+        2. 尋找位於巷弄內、或是描述中提到是私廚、在地人才知道的驚喜美味。
+        3. 嚴格避開跨國連鎖店與百貨大品牌。` : 
+        `【任務：優質名店模式】挑選當地評價最穩定、知名度高且絕對不踩雷的高品質餐廳。`;
+    const openNowInstruction = cfg.isOpenOnly ? 
+        `【重要過濾條件】用戶要求「現在營業中」，雖然名單已經初步過濾，但請再次檢查營業時間，確保推薦的店家現在是開放狀態。` : "";
+
+    // 3. 第三階段：構建給 AI 的最終 Prompt
+    const prompt = `你是頂級美食鑑定家。請從提供的名單中挑選 6 家最符合「${cfg.food} / ${cfg.purpose} / 預算 ${cfg.budget}」的餐廳。
+
+    指令：${hiddenGemInstruction}
+
+    名單數據：${JSON.stringify(detailedList)}
+
+    【回傳規範】：
+    請嚴格回傳一個 JSON 陣列，每個物件必須精準包含以下欄位，不可缺漏：
+    - name: 餐廳名稱
+    - rating: 評分 (數字)
+    - review_count: 評論數 (數字)
+    - distance: 請直接採用我提供的 real_distance 內容
+    - price: 消費區間 (例如 NT$400-800)
+    - opening_hours: 營業時間 (請精確整理我提供的「週一到週日」完整數據)
+    - address: 餐廳詳細地址
+    - signature: 該店必點的 1-2 樣招牌菜色
+    - review_summary: 濃縮網路評價最精闢的一句評論
+    - reason: 專業的推薦理由
+    - place_id: 原始名單中的 place_id`;
+
+    // 4. 第四階段：呼叫 Gemini AI
+    const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { 
+                response_mime_type: "application/json", 
+                temperature: 0.3 
+            }
+        })
+    });
+
+    const result = await response.json();
+    if (!result.candidates || !result.candidates[0].content.parts[0].text) {
+        throw new Error("AI 無法產生建議，請檢查 API Key 是否正確。");
+    }
+
+    const recommendations = JSON.parse(result.candidates[0].content.parts[0].text);
+    
+    // 5. 第五階段：回傳帶有「直接地圖連結」的結果
+    return recommendations.map(res => ({
+        ...res,
+        // 修改處：不規劃路線，改為直接導向 Google Maps 店家 Search 頁面
+        map_query: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.name)}&query_place_id=${res.place_id}`
+    }));
 }
         // --- 修改後的卡片渲染函式 ---
 function renderCards(restaurants) {
@@ -746,32 +855,32 @@ function renderCards(restaurants) {
                 <div class="info-bar">
                     <div class="pill pill-yellow">⭐Google評分 ${res.rating} (${res.review_count} 則)</div>
                     <div class="pill pill-orange">${res.distance}</div>
-                    <div class="pill">💰 價位 ${res.price}</div>
+                    <div class="pill">💰價位 ${res.price}</div>
                 </div>
 
                 <div class="detail-row">
                     <span class="detail-label">🕒營業時間 </span>
-                    <span class="detail-text">${res.opening_hours}</span>
+                    <div style="white-space: pre-wrap; font-size: 0.85rem; opacity: 0.85;">${res.opening_hours}</div>
                 </div>
 
                 <div class="detail-row">
                     <span class="detail-label">🏠詳細地址 </span>
-                    <span class="detail-text">${res.address}</span>
+                    <span>${res.address}</span>
                 </div>
 
                 <div class="detail-row">
                     <span class="detail-label">🔥必點招牌 </span>
-                    <span class="detail-text" style="color:var(--accent-yellow); font-weight:700;">${res.signature}</span>
+                    <span style="color:var(--accent-yellow); font-weight:700;">${res.signature}</span>
                 </div>
                 
                 <div class="summary-quote">"${res.review_summary}"</div>
 
-                <div class="detail-row" style="margin-top:5px; border-top:1px solid rgba(255,255,255,0.1); padding-top:15px;">
-                    <span class="detail-label">💡推薦理由 </span>
-                    <span class="detail-text" style="color:var(--accent-yellow); font-weight:600;">${res.reason}</span>
+                <div class="detail-row">
+                    <span class="detail-label">💡推薦原因 </span>
+                    <span style="color:var(--accent-yellow); font-weight:600;">${res.reason}</span>
                 </div>
 
-                <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 打開 Google Maps 店家資訊</a>
+                <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 查看 Google Maps 店家詳情</a>
             </div>
         `;
         wrapper.appendChild(card); stack.insertBefore(wrapper, stack.firstChild); initSwipe(card, wrapper, res);
