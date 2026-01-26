@@ -627,7 +627,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 async function getAiRanking(apiKey, cfg, rawPlaces) {
     // 註：Google 官方目前最穩定支援 JSON 模式的型號為 gemini-1.5-flash。
     // 若您堅持使用 2.5 字串請改回 2.5，但若發生 404 報錯，請務必換回 1.5。
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     // --- 步驟 1：數據準備與精準距離計算 (取代 Routes API) ---
     const detailedList = rawPlaces.map(p => {
