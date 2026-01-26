@@ -91,7 +91,7 @@
         .pill { background: rgba(255, 255, 255, 0.08); padding: 5px 12px; border-radius: 50px; font-size: 0.78rem; font-weight: 600; color: #eee; display: flex; align-items: center; gap: 5px;}
         .pill-orange { background: rgba(255, 102, 0, 0.15); color: var(--primary-orange); }
         .pill-yellow { background: rgba(255, 204, 0, 0.15); color: var(--accent-yellow); }
-        .summary-quote { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px; }
+        .summary-quote { font-style: italic;color: #bbb; background: rgba(255, 255, 255, 0.03);border-left: 2px solid rgba(255, 255, 255, 0.2); padding: 12px 15px; border-radius: 4px 14px 14px 4px;margin: 12px 0; font-size: 0.88rem; line-height: 1.6;}
         .card-map-btn { background: var(--primary-orange); color: #fff; text-decoration: none; padding: 14px; border-radius: 14px; text-align: center; font-weight: bold; margin-top: 10px; }
         .swipe-hints { position: absolute; top: 12px; left: 0; width: 100%; display: flex; justify-content: space-between; padding: 0 15px; pointer-events: none; z-index: 5; }
         .hint-item { font-size: 0.65rem; font-weight: bold; color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -114,8 +114,9 @@
         .swipe-label { z-index: 100 !important; }
         .card-content { padding: 60px 24px 24px 24px;display: flex; flex-direction: column; gap: 12px; }
         .card-title { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0; line-height: 1.2; }
-        .info-bar { display: flex; flex-wrap: wrap; gap: 10px; margin: 5px 0; }
-        .pill { background: rgba(255, 255, 255, 0.08); padding: 5px 12px; border-radius: 50px; font-size: 0.78rem; font-weight: 600; color: #eee; display: flex; align-items: center; gap: 5px;}
+        .info-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+        .pill-time { background: rgba(255, 255, 255, 0.05);color: #bbb;}
+        .pill-orange { color: var(--primary-orange); background: rgba(255, 102, 0, 0.12); border-color: rgba(255, 102, 0, 0.2); }
         .pill-orange { background: rgba(255, 102, 0, 0.15); color: var(--primary-orange); }
         .pill-yellow { background: rgba(255, 204, 0, 0.15); color: var(--accent-yellow); }
         .detail-row { color: #eee; }
@@ -654,18 +655,18 @@ async function getAiRanking(apiKey, cfg, rawPlaces) {
                 weekly_hours: p.regularOpeningHours?.weekdayDescriptions?.join('\n') || "未提供完整營業時間"
             };
         });
-    } catch (e) {
-        console.error("Routes API 失敗，退回物理計算：", e);
-        detailedList = rawPlaces.map(p => ({
-            name: p.displayName.text,
-            rating: p.rating || "N/A",
-            reviews: p.userRatingCount || 0,
-            address: p.formattedAddress,
-            place_id: p.id,
-            real_distance: calculateDistance(userCoords.lat, userCoords.lng, p.location.latitude, p.location.longitude),
-            // 修改處：同上，備援機制也改為完整週時間
-            weekly_hours: p.regularOpeningHours?.weekdayDescriptions?.join('\n') || "未提供完整營業時間"
-        }));
+    } const simplifiedList = rawPlaces.map(p => ({
+        name: p.displayName.text,
+        rating: p.rating,
+        reviews: p.userRatingCount,
+        address: p.formattedAddress,
+        place_id: p.id,
+        price_level: p.priceLevel,
+        distance: calculateDistance(userCoords.lat, userCoords.lng, p.location.latitude, p.location.longitude),
+        // 提供全部 7 天的時間讓 AI 總結成「週幾～週幾」
+        full_hours: p.regularOpeningHours?.weekdayDescriptions || [],
+        photo_name: p.photos && p.photos.length > 0 ? p.photos[0].name : null
+    }));
     }
 
     // 2. 第二階段：生成「隱藏版」或是「名店模式」的 AI 指令
