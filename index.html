@@ -911,6 +911,16 @@ function renderCards(restaurants) {
         star.addEventListener('click', handleStarClick);
         star.addEventListener('touchstart', handleStarClick); // 確保手機端反應靈敏
 
+       const star = card.querySelector('.star-btn');
+star.addEventListener('click', (e) => {
+    e.stopPropagation(); // 阻止滑動
+    toggleFavorite(res.place_id, res); 
+});
+star.addEventListener('touchstart', (e) => {
+    e.stopPropagation(); // 阻止滑動
+    toggleFavorite(res.place_id, res); 
+});
+        
         wrapper.appendChild(card); 
         stack.insertBefore(wrapper, stack.firstChild); 
         initSwipe(card, wrapper, res);
