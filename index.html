@@ -559,11 +559,20 @@ function toggleFavorite(placeId, resData) {
 // 渲染清單 (增加過濾功能)
 let currentFilter = 'all'; // 'all' 或 'fav'
 function renderHistoryList(filter = 'all') {
-    currentFilter = filter;
     const listContainer = document.getElementById('history-list');
-    const history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
+    const clearBtn = document.getElementById('clear-all-btn'); // 取得清除按鈕
     
-    // 根據標籤過濾內容
+    let history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
+    history = history.filter(item => item && item.name && item.place_id);
+
+    // --- 【新增核心邏輯】 ---
+    if (filter === 'fav') {
+        if (clearBtn) clearBtn.style.display = 'none'; // 如果是「最愛」，隱藏清除按鈕
+    } else {
+        if (clearBtn) clearBtn.style.display = 'block'; // 如果是「歷史」，顯示清除按鈕
+    }
+    // ----------------------
+
     const displayList = filter === 'fav' ? history.filter(item => item.isFav) : history;
     
     // 更新標題
@@ -1338,6 +1347,8 @@ function loadProfile() {
         <div id="history-list" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:15px; padding-bottom:20px;">
             <!-- 內容會由 JS 自動產生 -->
         </div>
+        <button id="clear-all-btn" onclick="clearAllHistory()" style="width:100%; padding:15px; background:rgba(255,102,0,0.1); border:1px solid var(--primary-orange); color:var(--primary-orange); border-radius:12px; font-weight:bold; cursor:pointer;">清除所有紀錄</button>
+</div>
         <button onclick="clearAllHistory()" style="width:100%; padding:15px; background:rgba(255,102,0,0.1); border:1px solid var(--primary-orange); color:var(--primary-orange); border-radius:12px; font-weight:bold; cursor:pointer;">清除所有紀錄</button>
     </div>
 </body>
