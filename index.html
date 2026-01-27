@@ -858,61 +858,58 @@ function renderCards(restaurants) {
     isFinalOne = (restaurants.length === 1);
 
     restaurants.forEach((res) => {
-    // 關鍵：先檢查這個店家在本地紀錄中是否已經是「最愛」
-    const history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
-    const isAlreadyFav = history.some(item => item.place_id === res.place_id && item.isFav);
-    
-    const wrapper = document.createElement('div'); wrapper.className = 'swipe-card-wrapper';
-    const card = document.createElement('div'); card.className = 'swipe-card';
-    
-    card.innerHTML = `
-        <div class="swipe-hints"><div class="hint-item">← NOPE</div><div class="hint-item">LIKE →</div></div>
-        <div class="swipe-label label-like">LIKE</div>
-        <div class="swipe-label label-nope">NOPE</div>
-        <div class="label-chosen">🏆 最終首選</div>
+        // 檢查是否已是最愛
+        const history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
+        const isAlreadyFav = history.some(item => item.place_id === res.place_id && item.isFav);
 
+        const wrapper = document.createElement('div'); wrapper.className = 'swipe-card-wrapper';
+        const card = document.createElement('div'); card.className = 'swipe-card';
+        
+        // 1. 建立 HTML 結構 (注意：星號現在沒有 onclick)
+        card.innerHTML = `
+            <div class="swipe-hints"><div class="hint-item">← NOPE</div><div class="hint-item">LIKE →</div></div>
+            <div class="swipe-label label-like">LIKE</div>
+            <div class="swipe-label label-nope">NOPE</div>
+            <div class="label-chosen">🏆 最終首選</div>
             <div class="card-content">
-            <!-- 修正位置：星星現在在 h2 標題裡面，店名前面 -->
-            <h2 class="card-title">
-                <span class="star-btn ${isAlreadyFav ? 'active' : ''}" 
-                      onclick="toggleFavorite(event, '${res.place_id}', this, ${JSON.stringify(res).replace(/"/g, '&quot;')})" 
-                      id="star-${res.place_id}">★</span>${res.name}
-            </h2>
-            
-            <div class="info-bar">
-                <div class="pill-yellow">⭐ googl評分 ${res.rating} (${res.review_count})</div>
-                <div class="pill-orange">📍 距離 ${res.distance}</div>
-                <div class="pill-price">💰 價位 ${res.price}</div>
-            </div>
-                
-                <div class="detail-section">
-                    <div class="detail-label">🕒 營業時間</div>
-                    <div class="detail-text">${res.opening_hours}</div>
+                <h2 class="card-title">
+                    <span class="star-btn ${isAlreadyFav ? 'active' : ''}" id="star-${res.place_id}">★</span>${res.name}
+                </h2>
+                <div class="info-bar">
+                    <div class="pill-yellow">⭐ googl評分 ${res.rating} (${res.review_count})</div>
+                    <div class="pill-orange">📍 直線距離 ${res.distance}</div>
+                    <div class="pill-price">💰 預估價位 ${res.price}</div>
                 </div>
-                
-                <div class="detail-section">
-                    <div class="detail-label">🏠 餐廳地址</div>
-                    <div class="detail-text">${res.address}</div>
-                </div>
-                
-                <div class="detail-section">
-                    <div class="detail-label">🔥 必點招牌</div>
-                    <div class="detail-text">${res.signature}</div>
-                </div>
-                
+                <div class="detail-section"><div class="detail-label">🕒 營業時間</div><div class="detail-text">${res.opening_hours}</div></div>
+                <div class="detail-section"><div class="detail-label">🏠 餐廳地址</div><div class="detail-text">${res.address}</div></div>
+                <div class="detail-section"><div class="detail-label">🔥 必點招牌</div><div class="detail-text">${res.signature}</div></div>
                 <div class="summary-quote">"${res.review_summary}"</div>
-
-                <div class="recommendation-box">
-                    <div class="detail-label">💡 推薦原因</div>
-                    <div style="color:var(--accent-yellow); font-size:1.05rem; line-height:1.7; font-weight:500;">${res.reason}</div>
-                </div>
-
-                <a class="card-map-btn" href="${res.map_query}" target="_blank" style="margin-top:15px; height:55px; border-radius:16px;">🗺️ 打開地圖查看詳情</a>
+                <div class="recommendation-box"><div class="detail-label">💡 推薦原因</div><div style="color:var(--accent-yellow); font-size:1.05rem; line-height:1.7; font-weight:500;">${res.reason}</div></div>
+                <a class="card-map-btn" href="${res.map_query}" target="_blank">🗺️ 打開地圖查看詳情</a>
             </div>
         `;
-        wrapper.appendChild(card); stack.insertBefore(wrapper, stack.firstChild); initSwipe(card, wrapper, res);
+
+        // 2. 【關鍵修正】手動綁定點擊事件，並強制停止事件傳遞
+        const star = card.querySelector('.star-btn');
+        const handleStarClick = (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // 阻止事件傳給卡片（不觸發滑動）
+            toggleFavorite(res.place_id, res); 
+        };
+        star.addEventListener('click', handleStarClick);
+        star.addEventListener('touchstart', handleStarClick); // 確保手機端反應靈敏
+
+        wrapper.appendChild(card); 
+        stack.insertBefore(wrapper, stack.firstChild); 
+        initSwipe(card, wrapper, res);
     });
-    const closeBtn = document.createElement('button'); closeBtn.className = 'close-swiper'; closeBtn.innerText = '← 返回修改'; closeBtn.onclick = resetUI; stack.appendChild(closeBtn);
+    
+    // 返回按鈕
+    const closeBtn = document.createElement('button'); 
+    closeBtn.className = 'close-swiper'; 
+    closeBtn.innerText = '← 返回修改'; 
+    closeBtn.onclick = resetUI; 
+    stack.appendChild(closeBtn);
 }
         
 // --- 修改後的滑動邏輯 (修正蓋章時 LIKE 消失) ---
