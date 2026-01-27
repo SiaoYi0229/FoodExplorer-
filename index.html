@@ -511,21 +511,29 @@ function saveToHistory(res) {
 }
 
 // 切換最愛狀態
-function toggleFavorite(event, placeId) {
-    if (event) event.stopPropagation(); // 防止觸發卡片其他點擊事件
+function toggleFavorite(placeId, resData) {
     let history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
     const index = history.findIndex(item => item.place_id === placeId);
     
+    let isNowFav = false;
+
     if (index !== -1) {
         history[index].isFav = !history[index].isFav;
-        localStorage.setItem('TASTE_HISTORY', JSON.stringify(history));
-        
-        // 更新 UI 星星顏色
-        const star = document.getElementById(`star-${placeId}`);
-        const listStar = document.getElementById(`list-star-${placeId}`);
-        if (star) star.classList.toggle('active', history[index].isFav);
-        if (listStar) listStar.classList.toggle('active', history[index].isFav);
-        if (star) star.innerText = history[index].isFav ? '★' : '★';
+        isNowFav = history[index].isFav;
+    } else if (resData) {
+        // 如果不在紀錄中，新增並設為最愛
+        const newRecord = { ...resData, isFav: true, savedAt: new Date().toLocaleString() };
+        history.unshift(newRecord);
+        isNowFav = true;
+    }
+    
+    localStorage.setItem('TASTE_HISTORY', JSON.stringify(history));
+
+    // 更新當前卡片星星狀態
+    const star = document.getElementById(`star-${placeId}`);
+    if (star) {
+        if (isNowFav) star.classList.add('active');
+        else star.classList.remove('active');
     }
 }
 
@@ -872,9 +880,13 @@ function renderCards(restaurants) {
             <div class="swipe-label label-nope">NOPE</div>
             <div class="label-chosen">🏆 最終首選</div>
             <div class="card-content">
-                <h2 class="card-title">
-                    <span class="star-btn ${isAlreadyFav ? 'active' : ''}" id="star-${res.place_id}">★</span>${res.name}
-                </h2>
+                <h2 class="card-title" style="display: flex; align-items: flex-start; gap: 5px;">
+    <span class="star-btn ${isAlreadyFav ? 'active' : ''}" 
+          id="star-${res.place_id}" 
+          style="flex-shrink: 0; margin-top: 2px;">★</span>
+    <span style="flex: 1;">${res.name}</span>
+</h2>
+
                 <div class="info-bar">
                     <div class="pill-yellow">⭐ googl評分 ${res.rating} (${res.review_count})</div>
                     <div class="pill-orange">📍 直線距離 ${res.distance}</div>
@@ -917,6 +929,11 @@ function initSwipe(card, wrapper, res) {
     let startX = 0, startY = 0, currentX = 0, isScrolling = false;
 
     card.addEventListener('touchstart', e => {
+        // --- 【核心修正】檢查摸到的目標是不是星星或地圖按鈕 ---
+        if (e.target.closest('.star-btn') || e.target.closest('.card-map-btn')) {
+            return; // 如果是星星或按鈕，不執行滑動邏輯
+        }
+
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         card.style.transition = 'none';
@@ -1010,40 +1027,36 @@ function initSwipe(card, wrapper, res) {
     }
 
     // 控制歷史紀錄面板顯示/隱藏
-function toggleHistory(show) {
-    document.getElementById('history-overlay').style.display = show ? 'flex' : 'none';
-}
-
-// 強化版最愛功能
-function toggleFavorite(event, placeId, element, resData) {
-    if (event) event.stopPropagation(); // 阻止點擊星星觸發其他卡片動作
-    
+function renderHistoryList(filter = 'all') {
+    const listContainer = document.getElementById('history-list');
     let history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
-    const index = history.findIndex(item => item.place_id === placeId);
     
-    let isNowFav = false;
+    // 安全檢查：過濾掉沒有名稱或損壞的資料
+    history = history.filter(item => item && item.name && item.place_id);
+    localStorage.setItem('TASTE_HISTORY', JSON.stringify(history)); // 順便寫回乾淨的資料
 
-    if (index !== -1) {
-        // 1. 如果已在歷史紀錄中，直接切換狀態
-        history[index].isFav = !history[index].isFav;
-        isNowFav = history[index].isFav;
-    } else {
-        // 2. 如果不在紀錄中 (還沒滑動就點星星)，直接新增並設為最愛
-        resData.isFav = true;
-        resData.savedAt = new Date().toLocaleString();
-        history.unshift(resData);
-        isNowFav = true;
+    const displayList = filter === 'fav' ? history.filter(item => item.isFav) : history;
+    
+    document.getElementById('history-title').innerText = filter === 'fav' ? '⭐ 我的最愛' : '🕒 探索歷史';
+
+    if (displayList.length === 0) {
+        listContainer.innerHTML = `<div style="text-align:center; margin-top:100px; color:#666;">${filter === 'fav' ? '尚未收藏任何店家' : '目前沒有紀錄'}</div>`;
+        return;
     }
     
-    // 儲存回手機記憶體
-    localStorage.setItem('TASTE_HISTORY', JSON.stringify(history));
-
-    // 即時更新所有畫面上的星星狀態
-    const allRelatedStars = document.querySelectorAll(`[id="star-${placeId}"], [id="list-star-${placeId}"]`);
-    allRelatedStars.forEach(s => {
-        if (isNowFav) s.classList.add('active');
-        else s.classList.remove('active');
-    });
+    listContainer.innerHTML = displayList.map((res, idx) => `
+        <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:18px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="flex:1; padding-right:10px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+                    <span onclick="toggleFavoriteInList(${idx}, '${filter}')" 
+                          style="cursor:pointer; font-size:1.5rem; color:${res.isFav ? '#FFCC00' : 'rgba(255,255,255,0.2)'}">★</span>
+                    <div style="font-weight:bold; color:#fff; font-size:1.1rem;">${res.name}</div>
+                </div>
+                <div style="font-size:0.8rem; color:#aaa;">${res.address}</div>
+            </div>
+            <a href="${res.map_query}" target="_blank" style="background:var(--primary-orange); color:#fff; padding:8px 15px; border-radius:10px; text-decoration:none; font-size:0.85rem; font-weight:bold;">地圖</a>
+        </div>
+    `).join('');
 }
 
 // 清除所有本地儲存紀錄
