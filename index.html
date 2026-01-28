@@ -132,15 +132,29 @@
         .star-btn { display: inline-block; cursor: pointer; transition: 0.2s ease; margin-right: 8px; color: rgba(255,255,255,0.2); font-style: normal; vertical-align: middle;}  
         .star-btn.active { color: #FFCC00 !important; transform: scale(1.1); text-shadow: 0 0 10px rgba(255, 204, 0, 0.4);}
         button:active {transform: scale(0.9);opacity: 0.8;}
+
+        #edit-bg-color {border-radius: 10px;overflow: hidden;padding: 0;border: 2px solid rgba(255,255,255,0.1);}
+        /* 讓 iOS 上的色盤按鈕看起來更扁平化 */
+        #edit-bg-color::-webkit-color-swatch-wrapper { padding: 0; }
+        #edit-bg-color::-webkit-color-swatch { border: none; }
     </style>
 </head>
-    <div id="profile-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(15px); z-index:11000; align-items:center; justify-content:center; padding:20px;">
+    <!-- 個人資料設定彈窗內 -->
+<div id="profile-overlay" ...>
     <div class="api-card" style="text-align:center;">
         <h2 style="color:#fff; margin-bottom:20px;">👤 編輯個人資料</h2>
         
-        <div style="margin-bottom:20px;">
-            <label style="display:block; margin-bottom:10px; color:#aaa;">選擇你的頭像 Emoji</label>
-            <input type="text" id="edit-avatar" class="api-input" style="font-size:2rem; width:80px;" maxlength="2" placeholder="👤">
+        <!-- 頭像與稱呼 (原本的) -->
+        <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 20px;">
+            <div style="flex: 1;">
+                <label style="display:block; margin-bottom:8px; color:#aaa; font-size: 0.8rem;">頭像 Emoji</label>
+                <input type="text" id="edit-avatar" class="api-input" style="font-size:1.5rem; padding: 10px;" maxlength="2">
+            </div>
+            <div style="flex: 1;">
+                <label style="display:block; margin-bottom:8px; color:#aaa; font-size: 0.8rem;">背景顏色</label>
+                <!-- 核心：系統色盤按鈕 -->
+                <input type="color" id="edit-bg-color" style="width: 100%; height: 45px; border: none; background: transparent; cursor: pointer;">
+            </div>
         </div>
 
         <div style="margin-bottom:25px;">
@@ -149,7 +163,7 @@
         </div>
 
         <button class="api-save-btn" onclick="saveProfile()">儲存個人設定</button>
-        <button onclick="document.getElementById('profile-overlay').style.display='none'" style="background:none; border:none; color:#555; margin-top:15px; cursor:pointer;">取消</button>
+        <button onclick="document.getElementById('profile-overlay').style.display='none'" style="...">取消</button>
     </div>
 </div>
 <body touch-action="none">
@@ -1290,25 +1304,46 @@ function incrementUsage() {
     updateUsageDisplay(); loadProfile();
 }
 
+// --- 修改後的：開啟編輯面版 (預載入目前顏色) ---
 function openEditProfile() {
     document.getElementById('edit-name').value = localStorage.getItem('U_NAME') || "美食探索者";
     document.getElementById('edit-avatar').value = localStorage.getItem('U_AVATAR') || "👤";
+    document.getElementById('edit-bg-color').value = localStorage.getItem('U_BG_COLOR') || "#FF6600";
     document.getElementById('profile-overlay').style.display = 'flex';
 }
 
+// --- 修改後的：儲存個人資料 ---
 function saveProfile() {
-    localStorage.setItem('U_NAME', document.getElementById('edit-name').value);
-    localStorage.setItem('U_AVATAR', document.getElementById('edit-avatar').value);
+    const newName = document.getElementById('edit-name').value.trim();
+    const newAvatar = document.getElementById('edit-avatar').value.trim();
+    const newBgColor = document.getElementById('edit-bg-color').value; // 抓取色盤顏色
+
+    if (newName) localStorage.setItem('U_NAME', newName);
+    if (newAvatar) localStorage.setItem('U_AVATAR', newAvatar);
+    localStorage.setItem('U_BG_COLOR', newBgColor); // 儲存顏色 hex code
+    
     document.getElementById('profile-overlay').style.display = 'none';
-    loadProfile();
+    loadProfile(); // 立即重新載入
 }
 
+
+// --- 修改後的：載入個人資料 ---
 function loadProfile() {
     const name = localStorage.getItem('U_NAME') || "美食探索者";
     const avatar = localStorage.getItem('U_AVATAR') || "👤";
+    const bgColor = localStorage.getItem('U_BG_COLOR') || "#FF6600"; // 預設橘色
     const total = parseInt(localStorage.getItem('TOTAL_SEARCH') || '0');
+
+    // 更新選單中的名字與頭像
     document.getElementById('user-name-display').innerText = name;
     document.getElementById('user-avatar-display').innerText = avatar;
+    
+    // 【重點】更新頭像背景顏色（移除漸層，改用使用者自訂色）
+    const avatarCircle = document.getElementById('user-avatar-display');
+    avatarCircle.style.background = bgColor;
+    avatarCircle.style.boxShadow = `0 0 20px ${bgColor}44`; // 增加一點對應顏色的發光感
+
+    // 更新等級
     document.getElementById('user-level-display').innerText = `等級：${getUserTitle(total)} (${total}次)`;
 }
     </script> 
