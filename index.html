@@ -640,18 +640,15 @@ function renderHistoryList(filter = 'all') {
     }
 }
 
-
-        
-        // --- 核心修正：自動打字機計時器 ---
-        let typingTimer;
-        function runTypingEffect() {
+   function runTypingEffect() {
         const textElem = document.getElementById('loader-text');
-        const texts = [
-             "正在同步您的地理座標...",
-             "正在挖掘巷弄中的隱藏美味...",
-             "正在挑選能驚艷您味蕾的驚喜...",
-             "正在為您策劃專屬的美味提案..." ];
-        let stage = 0;
+        const texts = ["正在同步您的地理座標....", "正在挖掘巷弄中的隱藏美味...","正在挑選能驚艷您味蕾的驚喜...", "正在為您策劃專屬的美味提案..."];
+        let i = 0;
+        clearInterval(loaderInterval);
+        loaderInterval = setInterval(() => { i = (i + 1) % texts.length; textElem.innerText = texts[i]; }, 3000);
+    }
+        
+        
     
         // 單個文字打字函式
         function typeChar(text) {
@@ -1331,13 +1328,7 @@ function initSwipe(card, wrapper, res) {
         box.style.display = (box.style.display === 'none') ? 'block' : 'none';
     }
 
-    function runTypingEffect() {
-        const textElem = document.getElementById('loader-text');
-        const texts = ["正在同步您的地理座標....", "正在挖掘巷弄中的隱藏美味...","正在挑選能驚艷您味蕾的驚喜...", "正在為您策劃專屬的美味提案...",
-        let i = 0;
-        clearInterval(loaderInterval);
-        loaderInterval = setInterval(() => { i = (i + 1) % texts.length; textElem.innerText = texts[i]; }, 3000);
-    }
+ 
 
         // --- 系統設定功能 ---
 
