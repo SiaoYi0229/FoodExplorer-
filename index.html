@@ -766,7 +766,6 @@ async function handleSearchClick() {
     if (data.error) throw new Error(data.error.message); // 增加錯誤偵測
     return data.places || [];
 }
-}
 // --- 修正後的物理距離計算函式 ---
 function calculateDistance(lat1, lon1, lat2, lon2) {
     if (!lat1 || !lon1 || !lat2 || !lon2) return "未知距離";
