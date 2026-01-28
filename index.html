@@ -596,49 +596,7 @@ function toggleFavorite(placeId, resData) {
 
 // 渲染清單 (增加過濾功能)
 let currentFilter = 'all'; // 'all' 或 'fav'
-// 3. 渲染清單 (根據 filter 抓取不同資料庫)
-function renderHistoryList(filter = 'all') {
-    const listContainer = document.getElementById('history-list');
-    const clearBtn = document.getElementById('clear-all-btn');
-    
-    // 關鍵：根據模式選擇資料庫
-    let data = (filter === 'fav') 
-        ? JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]') 
-        : JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
 
-    document.getElementById('history-title').innerText = (filter === 'fav') ? '⭐ 我的最愛' : '🕒 探索歷史';
-    if (clearBtn) clearBtn.style.display = (filter === 'fav') ? 'none' : 'block';
-
-    if (data.length === 0) {
-        listContainer.innerHTML = `<div style="text-align:center; margin-top:100px; color:#666;">尚未有紀錄</div>`;
-        return;
-    }
-
-    if (filter === 'fav') {
-        // 最愛模式：執行類別分組
-        const groups = data.reduce((acc, item) => {
-            const cat = item.category || "一般探索";
-            if (!acc[cat]) acc[cat] = [];
-            acc[cat].push(item);
-            return acc;
-        }, {});
-
-        let html = '';
-        for (const cat in groups) {
-            html += `
-                <div style="margin-top:15px;">
-                    <div style="color:var(--primary-orange); font-size:0.85rem; font-weight:800; padding:4px 10px; background:rgba(255,102,0,0.15); border-radius:6px; display:inline-block; margin-bottom:10px;">${cat}</div>
-                    <div style="display:flex; flex-direction:column; gap:12px;">
-                        ${groups[cat].map(res => renderItemHTML(res, filter)).join('')}
-                    </div>
-                </div>`;
-        }
-        listContainer.innerHTML = html;
-    } else {
-        // 歷史模式：直接排列
-        listContainer.innerHTML = data.map(res => renderItemHTML(res, filter)).join('');
-    }
-}
 
    function runTypingEffect() {
         const textElem = document.getElementById('loader-text');
@@ -648,34 +606,6 @@ function renderHistoryList(filter = 'all') {
         loaderInterval = setInterval(() => { i = (i + 1) % texts.length; textElem.innerText = texts[i]; }, 3000);
     }
         
-        
-    
-        // 單個文字打字函式
-        function typeChar(text) {
-        textElem.innerHTML = "";
-        let charIndex = 0;
-        if (typingTimer) clearInterval(typingTimer);
-        typingTimer = setInterval(() => {
-            if (charIndex < text.length) {
-                textElem.innerHTML += text.charAt(charIndex);
-                charIndex++;
-            } else {
-                clearInterval(typingTimer);
-            }
-        }, 100); 
-    }
-
-    typeChar(texts[0]);
-    if (loaderInterval) clearInterval(loaderInterval);
-    loaderInterval = setInterval(() => {
-        stage++;
-        if (stage < texts.length) {
-            typeChar(texts[stage]);
-        } else {
-            clearInterval(loaderInterval); 
-        }
-    }, 7000); // <--- 已從 10000 改為 7000
-}
        
 async function handleSearchClick() {
     const apiKey = getStoredKey();
@@ -1547,6 +1477,19 @@ function closeSwipe(id) {
 
         <button class="api-save-btn" onclick="saveProfile()">儲存個人設定</button>
         <button onclick="document.getElementById('profile-overlay').style.display='none'" style="background:none; border:none; color:#555; margin-top:15px; cursor:pointer;">✕ 取消返回</button>
+    </div>
+</div>
+    <div id="note-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); z-index:15000; align-items:center; justify-content:center; padding:20px;">
+    <div class="api-card" style="max-width: 400px;">
+        <h2 id="note-shop-name" style="color:#fff; margin-bottom:10px;">店名</h2>
+        <div id="note-upload-area" onclick="document.getElementById('note-file-input').click()" style="width:100%; height:150px; background:rgba(255,255,255,0.05); border:2px dashed rgba(255,255,255,0.2); border-radius:15px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; overflow:hidden;">
+            <img id="note-img-preview" style="width:100%; height:100%; object-fit:cover; display:none;">
+            <span id="note-upload-hint" style="color:#666;">📸 點擊上傳食物照片</span>
+            <input type="file" id="note-file-input" hidden accept="image/*" onchange="handleNoteImage(this)">
+        </div>
+        <textarea id="note-text-area" class="api-input" style="height:100px; margin-top:15px; text-align:left;" placeholder="寫下你的用餐筆記..."></textarea>
+        <button class="api-save-btn" style="margin-top:15px;" onclick="saveShopNote()">儲存心得</button>
+        <button onclick="document.getElementById('note-overlay').style.display='none'" style="background:none; border:none; color:#555; margin-top:15px; cursor:pointer; width:100%;">✕ 取消</button>
     </div>
 </div>
 </body>
