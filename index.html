@@ -425,8 +425,15 @@
                 active.classList.remove('active'); next.classList.add('active');
             }, 6000);
         };
-        function toggleApiGuide() { const box = document.getElementById('api-guide-box'); box.style.display = box.style.display === 'none' ? 'block' : 'none'; }
-        function initLocationWatch() { if ("geolocation" in navigator) { navigator.geolocation.watchPosition((pos) => { userCoords.lat = pos.coords.latitude; userCoords.lng = pos.coords.longitude; if (!isNearbyMode) document.getElementById('coords-text').innerText = `📍 ${userCoords.lat.toFixed(4)}, ${userCoords.lng.toFixed(4)}`; }, () => {}, { enableHighAccuracy: true }); } }
+function toggleApiGuide() {
+    const box = document.getElementById('api-guide-box');
+    // 修正邏輯：如果目前是空的或是 none，就顯示；否則隱藏
+    if (box.style.display === "" || box.style.display === "none") {
+        box.style.display = "block";
+    } else {
+        box.style.display = "none";
+    }
+}        function initLocationWatch() { if ("geolocation" in navigator) { navigator.geolocation.watchPosition((pos) => { userCoords.lat = pos.coords.latitude; userCoords.lng = pos.coords.longitude; if (!isNearbyMode) document.getElementById('coords-text').innerText = `📍 ${userCoords.lat.toFixed(4)}, ${userCoords.lng.toFixed(4)}`; }, () => {}, { enableHighAccuracy: true }); } }
         function toggleNearbyMode() {
             isNearbyMode = !isNearbyMode; const btn = document.getElementById('location-display'); const fields = document.querySelectorAll('.nearby-toggle');
             if (isNearbyMode) { btn.classList.add('active-mode'); fields.forEach(f => f.classList.add('hide-field')); document.getElementById('mrt-section').style.display = 'none'; document.getElementById('coords-text').innerText = "🎯 搜尋附近 1.5km 內美食"; }
