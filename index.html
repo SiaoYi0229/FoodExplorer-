@@ -239,6 +239,9 @@
             <div class="menu-item" onclick="openHistoryFromMenu('all')">
                 <span class="menu-icon">🕒</span> 探索歷史紀錄
             </div>
+            <div class="menu-item" onclick="openSettings()">
+        <span class="menu-icon">⚙️</span> 系統參數設定
+    </div>
         </div>
 
         <div style="margin-top:auto; font-size:0.7rem; color:#444; text-align:center;">TasteExplorer v2.5 Beta</div>
@@ -738,13 +741,14 @@ async function handleSearchClick() {
 
 
         async function fetchRealPlaces(apiKey, cfg) {
+                const userCardCount = parseInt(localStorage.getItem('EXPLORER_CARD_COUNT') || "10");
     let qFood = cfg.food.split(' / ')[0].replace(" (什麼都想吃)", "").replace("全部", "美食餐廳");
     let qDist = (cfg.district === "全區") ? "" : cfg.district;
     let query = isNearbyMode ? qFood : `${cfg.cityName} ${qDist} ${qFood}`;
 
     const requestBody = {
         textQuery: query,
-        maxResultCount: cfg.isHidden ? 20 : 12,
+        maxResultCount:userCardCount,
         languageCode: "zh-TW",
         regionCode: "TW",
         openNow: cfg.isOpenOnly
@@ -1277,7 +1281,61 @@ function initSwipe(card, wrapper, res) {
         clearInterval(loaderInterval);
         loaderInterval = setInterval(() => { i = (i + 1) % texts.length; textElem.innerText = texts[i]; }, 3000);
     }
+
+        // --- 系統設定功能 ---
+
+function openSettings() {
+    // 預載目前設定的值
+    const savedCount = localStorage.getItem('EXPLORER_CARD_COUNT') || "10";
+    document.getElementById('setting-card-count').value = savedCount;
+    
+    toggleSideMenu(false); // 關閉側邊欄
+    setTimeout(() => {
+        document.getElementById('settings-overlay').style.display = 'flex';
+    }, 300);
+}
+
+function saveSettings() {
+    const cardCount = document.getElementById('setting-card-count').value;
+    localStorage.setItem('EXPLORER_CARD_COUNT', cardCount);
+    
+    document.getElementById('settings-overlay').style.display = 'none';
+    alert("設定已儲存！下次搜尋將套用新參數。");
+}
+
+        function resetUI() {
+    document.getElementById('swiper-overlay').style.display = 'none';
+    document.getElementById('no-match-modal').style.display = 'none';
+    document.getElementById('history-overlay').style.display = 'none';
+    document.getElementById('profile-overlay').style.display = 'none';
+    document.getElementById('settings-overlay').style.display = 'none'; // 新增這行
+    document.getElementById('main-ui').classList.remove('blur-mode');
+    keptRestaurants = [];
+    isFinalOne = false;
+}
     </script> 
+
+    <div id="settings-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(15px); z-index:12000; align-items:center; justify-content:center; padding:20px;">
+    <div class="api-card" style="text-align:center;">
+        <h2 style="color:#fff; margin-bottom:20px;">⚙️ 系統參數設定</h2>
+        
+        <div style="margin-bottom:25px; text-align: left;">
+            <label style="color:#aaa; font-size: 0.85rem; display: block; margin-bottom: 10px;">單次探索建議店家數：</label>
+            <div class="input-box" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); height: 45px;">
+                <select id="setting-card-count" style="color: white; width: 100%; border: none; background: transparent; outline: none;">
+                    <option value="6">精選 6 家 (最省流量)</option>
+                    <option value="10" selected>標準 10 家 (建議)</option>
+                    <option value="15">詳盡 15 家</option>
+                    <option value="20">豐富 20 家 (耗費較多額度)</option>
+                </select>
+            </div>
+            <p style="color: #666; font-size: 0.7rem; margin-top: 8px;">* 數量愈多，AI 鑑定與分析所需時間愈長。</p>
+        </div>
+
+        <button class="api-save-btn" onclick="saveSettings()">儲存系統設定</button>
+        <button onclick="document.getElementById('settings-overlay').style.display='none'" style="background:none; border:none; color:#555; margin-top:15px; cursor:pointer;">✕ 取消返回</button>
+    </div>
+</div>
 
     <div id="history-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); backdrop-filter:blur(25px); -webkit-backdrop-filter:blur(25px); z-index:9000; padding:30px 20px; flex-direction:column; color:white;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
