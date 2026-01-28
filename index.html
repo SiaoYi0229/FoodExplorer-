@@ -699,34 +699,33 @@ async function handleSearchClick() {
 }
      
       
-        async function startSearch(apiKey, config) {
+        aasync function startSearch(apiKey, config) {
     const loader = document.getElementById('loader');
-    const btn = document.getElementById('search-btn');}
-
+    const btn = document.getElementById('search-btn');
     
-    // 啟動 UI 載入狀態
+    // 1. 啟動 UI 載入狀態
     loader.style.display = 'flex';
     runTypingEffect(); // 啟動打字機動效
     btn.disabled = true;
 
     try {
-        // --- 第一階段：獲取 Google 地圖原始數據 ---
+        // 2. 第一階段：獲取 Google 地圖原始數據
         const rawPlaces = await fetchRealPlaces(apiKey, config);
         
         if (!rawPlaces || rawPlaces.length === 0) {
             throw new Error("在該區域找不到符合條件的店家，請放寬搜尋條件。");
         }
 
-        // --- 第二階段：進行 AI 鑑定與理由生成 ---
+        // 3. 第二階段：進行 AI 鑑定與理由生成 (這裡會用到 Gemini)
         const finalRecommendations = await getAiRanking(apiKey, config, rawPlaces);
 
-        // --- 第三階段：渲染結果 ---
+        // 4. 第三階段：渲染結果
         if (finalRecommendations && finalRecommendations.length > 0) {
-            incrementUsage();
+            incrementUsage(); // 這裡會連動更新你剛加的「API 流量監控」
             keptRestaurants = []; 
             isFinalOne = false;
 
-            // 核心：加入分類標籤
+            // 加入食物分類標籤，方便歷史紀錄分類
             const foodCategory = config.food; 
             const taggedRecommendations = finalRecommendations.map(res => ({
                 ...res,
@@ -739,31 +738,24 @@ async function handleSearchClick() {
         console.error("探索過程發生錯誤:", e);
         let errorMsg = e.message;
         
-        // 這是你最關鍵的邏輯：精準導引用戶去修復 API 設定
+        // 精準錯誤引導
         if (errorMsg.includes("Places API")) {
-            errorMsg = "❌ 地圖權限未開啟！\n請點擊右上角⚙️進入設定，點擊教學中的「Places API」連結並啟用，並確認已綁定結算帳戶。";
+            errorMsg = "❌ 地圖權限未開啟！\n請進入 Google Cloud 控制台啟用「Places API (New)」，並確認已綁定信用卡（結算帳戶）。";
         } else if (errorMsg.includes("Generative Language") || errorMsg.includes("Gemini")) {
-            errorMsg = "❌ AI 權限未開啟！\n請點擊右上角⚙️進入設定，點擊教學中的「Gemini API」連結並啟用。";
+            errorMsg = "❌ AI 權限未開啟！\n請確認你的 API Key 已啟用「Generative Language API」。";
         } else if (errorMsg.includes("Candidates")) {
-            errorMsg = "❌ AI 無法產生推薦，通常是因為 API Key 尚未生效或結算帳戶 (信用卡) 有問題。";
-        } else if (errorMsg.includes("quota")) {
-            errorMsg = "⚠️ API 額度已達上限，請明天再試或更換 Key。";
+            errorMsg = "❌ AI 無法產生推薦，可能是因為區域內店家資訊不足或 API Key 限制。";
         }
         
         alert(errorMsg);
     } finally {
-        // 停止打字機
+        // 5. 停止動畫並恢復按鈕
         if (loaderInterval) clearInterval(loaderInterval);
         if (typingTimer) clearInterval(typingTimer);
         
-        // 隱藏 Loader
-        const loader = document.getElementById('loader');
-        if (loader) loader.style.display = 'none';
-        
-        const btn = document.getElementById('search-btn');
-        if (btn) btn.disabled = false;
+        loader.style.display = 'none';
+        btn.disabled = false;
     }
-}
 
         async function fetchRealPlaces(apiKey, cfg) {
                 const userCardCount = parseInt(localStorage.getItem('EXPLORER_CARD_COUNT') || "10");
