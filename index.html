@@ -1090,15 +1090,7 @@ function initSwipe(card, wrapper, res) {
         }, 400);
     }
 
-    function resetUI() {
-    document.getElementById('swiper-overlay').style.display = 'none';
-    document.getElementById('no-match-modal').style.display = 'none';
-    document.getElementById('history-overlay').style.display = 'none';
-    document.getElementById('profile-overlay').style.display = 'none';
-    document.getElementById('main-ui').classList.remove('blur-mode');
-    keptRestaurants = [];
-    isFinalOne = false;
-}
+  
     // 控制歷史紀錄面板顯示/隱藏
 function renderHistoryList(filter = 'all') {
     const listContainer = document.getElementById('history-list');
@@ -1328,9 +1320,6 @@ function saveProfile() {
         <div id="history-list" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:15px; padding-bottom:20px;"></div>
         <button id="clear-all-btn" onclick="clearAllHistory()" style="width:100%; padding:15px; background:rgba(255,102,0,0.1); border:1px solid var(--primary-orange); color:var(--primary-orange); border-radius:12px; font-weight:bold; cursor:pointer;">清除所有紀錄</button>
     </div>
-
-</body>
-</html>
         
         <!-- 店家清單容器 -->
         <div id="history-list" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:15px; padding-bottom:20px;">
