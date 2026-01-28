@@ -514,88 +514,97 @@ function openHistoryFromMenu(type) {
 // 確保留下這段在 initSwipe 的 LIKE 判斷中：
 // if (currentX > 120) { saveToHistory(res); ... }
 
-// 核心：統一儲存歷史紀錄與最愛
+// 1. 儲存到歷史紀錄 (只要 LIKE 就存)
 function saveToHistory(res) {
     let history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
-    // 檢查是否已存在
-    const index = history.findIndex(item => item.place_id === res.place_id);
-    
-    if (index === -1) {
-        res.isFav = false; // 預設不是最愛
+    if (!history.some(item => item.place_id === res.place_id)) {
         res.savedAt = new Date().toLocaleString();
-        history.unshift(res); 
+        history.unshift(res);
         if (history.length > 50) history.pop();
+        localStorage.setItem('TASTE_HISTORY', JSON.stringify(history));
     }
-    localStorage.setItem('TASTE_HISTORY', JSON.stringify(history));
 }
 
-// 切換最愛狀態
+
+// 2. 切換最愛狀態 (獨立存儲到 TASTE_FAVORITES)
 function toggleFavorite(placeId, resData) {
-    let history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
-    const index = history.findIndex(item => item.place_id === placeId);
+    let favorites = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
+    const index = favorites.findIndex(item => item.place_id === placeId);
     
     let isNowFav = false;
 
     if (index !== -1) {
-        history[index].isFav = !history[index].isFav;
-        isNowFav = history[index].isFav;
-    } else if (resData) {
-        // 如果不在紀錄中，新增並設為最愛
-        const newRecord = { ...resData, isFav: true, savedAt: new Date().toLocaleString() };
-        history.unshift(newRecord);
+        // 如果已經在最愛裡，就移除 (取消收藏)
+        favorites.splice(index, 1);
+        isNowFav = false;
+    } else {
+        // 如果不在最愛裡，就加入，並補上類別
+        const foodCat = resData.category || document.getElementById('food').options[document.getElementById('food').selectedIndex].text;
+        const newFav = { ...resData, category: foodCat, savedAt: new Date().toLocaleString() };
+        favorites.unshift(newFav);
         isNowFav = true;
     }
     
-    localStorage.setItem('TASTE_HISTORY', JSON.stringify(history));
+    localStorage.setItem('TASTE_FAVORITES', JSON.stringify(favorites));
 
-    // 更新當前卡片星星狀態
+    // 同步更新當前畫面星星狀態
     const star = document.getElementById(`star-${placeId}`);
     if (star) {
-        if (isNowFav) star.classList.add('active');
-        else star.classList.remove('active');
+        star.classList.toggle('active', isNowFav);
     }
 }
 
 // 渲染清單 (增加過濾功能)
 let currentFilter = 'all'; // 'all' 或 'fav'
+// 3. 渲染清單 (根據 filter 抓取不同資料庫)
 function renderHistoryList(filter = 'all') {
+    currentFilter = filter;
     const listContainer = document.getElementById('history-list');
-    const clearBtn = document.getElementById('clear-all-btn'); // 取得清除按鈕
+    const clearBtn = document.getElementById('clear-all-btn');
     
-    let history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
-    history = history.filter(item => item && item.name && item.place_id);
-
-    // --- 【新增核心邏輯】 ---
+    // 關鍵：根據模式選擇不同的資料庫來源
+    let dataList = [];
     if (filter === 'fav') {
-        if (clearBtn) clearBtn.style.display = 'none'; // 如果是「最愛」，隱藏清除按鈕
+        dataList = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
+        if (clearBtn) clearBtn.style.display = 'none'; // 最愛不顯示一鍵刪除
+        document.getElementById('history-title').innerText = '⭐ 我的最愛';
     } else {
-        if (clearBtn) clearBtn.style.display = 'block'; // 如果是「歷史」，顯示清除按鈕
+        dataList = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
+        if (clearBtn) clearBtn.style.display = 'block'; // 歷史顯示一鍵刪除
+        document.getElementById('history-title').innerText = '🕒 探索歷史';
     }
-    // ----------------------
 
-    const displayList = filter === 'fav' ? history.filter(item => item.isFav) : history;
-    
-    // 更新標題
-    document.getElementById('history-title').innerText = filter === 'fav' ? '⭐ 我的最愛' : '🕒 探索歷史';
-
-    if (displayList.length === 0) {
-        listContainer.innerHTML = `<div style="text-align:center; margin-top:100px; color:#666;">${filter === 'fav' ? '尚未收藏任何店家' : '目前沒有紀錄'}</div>`;
+    if (dataList.length === 0) {
+        listContainer.innerHTML = `<div style="text-align:center; margin-top:100px; color:#666;">尚未有任何紀錄</div>`;
         return;
     }
-    
-    listContainer.innerHTML = displayList.map((res) => `
-        <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:18px; display:flex; justify-content:space-between; align-items:center;">
-            <div style="flex:1;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span id="list-star-${res.place_id}" class="star-btn ${res.isFav?'active':''}" onclick="toggleFavorite(null, '${res.place_id}')" style="cursor:pointer;">★</span>
-                    <div style="font-weight:bold; color:#fff;">${res.name}</div>
-                </div>
-                <div style="font-size:0.8rem; color:#aaa; margin-top:4px;">${res.address}</div>
-            </div>
-            <a href="${res.map_query}" target="_blank" style="background:var(--primary-orange); color:#fff; padding:8px 15px; border-radius:10px; text-decoration:none; font-size:0.85rem; font-weight:bold;">地圖</a>
-        </div>
-    `).join('');
+
+    if (filter === 'fav') {
+        // 最愛模式：執行分類分組
+        const groups = dataList.reduce((acc, item) => {
+            const cat = item.category || "一般探索";
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(item);
+            return acc;
+        }, {});
+
+        let html = '';
+        for (const cat in groups) {
+            html += `
+                <div style="margin-top:15px;">
+                    <div style="color:var(--primary-orange); font-size:0.85rem; font-weight:800; padding:4px 10px; background:rgba(255,102,0,0.15); border-radius:6px; display:inline-block; margin-bottom:10px;">${cat}</div>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        ${groups[cat].map(res => renderItemHTML(res, filter)).join('')}
+                    </div>
+                </div>`;
+        }
+        listContainer.innerHTML = html;
+    } else {
+        // 歷史模式：直接顯示
+        listContainer.innerHTML = dataList.map(res => renderItemHTML(res, filter)).join('');
+    }
 }
+
 
 
         
@@ -901,14 +910,9 @@ function renderCards(restaurants) {
     isFinalOne = (restaurants.length === 1);
 
     restaurants.forEach((res) => {
-        // 2. 檢查此店家是否已在收藏中
-        const history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
-        const isAlreadyFav = history.some(item => item.place_id === res.place_id && item.isFav);
-
-        const wrapper = document.createElement('div'); 
-        wrapper.className = 'swipe-card-wrapper';
-        const card = document.createElement('div'); 
-        card.className = 'swipe-card';
+    // 關鍵修正：從最愛資料庫檢查
+    const favorites = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
+    const isAlreadyFav = favorites.some(item => item.place_id === res.place_id);
         
         // 3. 完美的卡片 HTML 結構 (包含星星、類標籤、詳細內容)
         card.innerHTML = `
@@ -1183,23 +1187,42 @@ function renderHistoryList(filter = 'all') {
     }
 }
 
+// 4. 單筆渲染 HTML (修正星星判斷)
 function renderItemHTML(res, filter) {
+    // 在歷史模式下，也要檢查這家店是不是也在最愛裡，星星才會亮
+    const favorites = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
+    const isFav = favorites.some(item => item.place_id === res.place_id);
+
     return `
-        <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:18px; display:flex; justify-content:space-between; align-items:center;">
-            <div style="flex:1; padding-right:10px;">
+        <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:18px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <div style="flex:1; padding-right:5px;">
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
-                    <span onclick="toggleFavoriteInList('${res.place_id}', '${filter}')" style="cursor:pointer; font-size:1.5rem; color:${res.isFav ? '#FFCC00' : 'rgba(255,255,255,0.2)'}">★</span>
-                    <div style="font-weight:bold; color:#fff; font-size:1.1rem;">${res.name}</div>
+                    <span onclick="toggleFavorite('${res.place_id}', ${JSON.stringify(res).replace(/"/g, '&quot;')}); renderHistoryList('${filter}')" 
+                          style="cursor:pointer; font-size:1.5rem; color:${isFav ? '#FFCC00' : 'rgba(255,255,255,0.2)'};">★</span>
+                    <div style="font-weight:bold; color:#fff; font-size:1.1rem; line-height:1.2;">${res.name}</div>
                 </div>
                 <div style="font-size:0.8rem; color:#aaa;">${res.address}</div>
             </div>
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
                 <a href="${res.map_query}" target="_blank" style="background:var(--primary-orange); color:#fff; padding:8px 12px; border-radius:10px; text-decoration:none; font-size:0.8rem; font-weight:bold;">地圖</a>
-                <button onclick="deleteSingleHistory('${res.place_id}', '${filter}')" style="background:none; border:none; color:#ff6666; cursor:pointer; font-size:1.2rem;">✕</button>
+                <button onclick="deleteSingleRecord('${res.place_id}', '${filter}')" 
+                        style="background:none; border:none; color:#ff6666; font-size:1.2rem; cursor:pointer;">✕</button>
             </div>
         </div>`;
 }
 
+// 5. 單筆刪除功能 (根據 listType 決定刪哪邊)
+function deleteSingleRecord(placeId, listType) {
+    const dbName = (listType === 'fav') ? 'TASTE_FAVORITES' : 'TASTE_HISTORY';
+    if (!confirm(`確定要從${listType === 'fav' ? '最愛' : '歷史'}中刪除嗎？`)) return;
+    
+    let list = JSON.parse(localStorage.getItem(dbName) || '[]');
+    list = list.filter(item => item.place_id !== placeId);
+    localStorage.setItem(dbName, JSON.stringify(list));
+    
+    renderHistoryList(listType);
+}
+        
 function deleteSingleHistory(placeId, filter) {
     if (!confirm("確定要刪除這筆紀錄嗎？")) return;
     let history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
@@ -1217,10 +1240,10 @@ function toggleFavoriteInList(placeId, filter) {
     }
 }
 
+// 6. 一鍵清除功能 (只清除歷史)
 function clearAllHistory() {
-    if (confirm("確定要清除所有探索歷史嗎？（最愛店家將保留）")) {
-        let history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
-        localStorage.setItem('TASTE_HISTORY', JSON.stringify(history.filter(i => i.isFav)));
+    if (confirm("確定要清空所有探索歷史嗎？（您的「我的最愛」將會完整保留）")) {
+        localStorage.removeItem('TASTE_HISTORY');
         renderHistoryList('all');
     }
 }
