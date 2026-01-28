@@ -261,6 +261,28 @@
         
         <!-- 使用者區塊 -->
 <div class="user-section" onclick="openEditProfile()" style="display:flex; align-items:center; gap:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:20px; cursor:pointer;">
+   <div id="api-dashboard" style="background: rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 15px; margin: 15px 0; border: 1px solid rgba(255, 255, 255, 0.1);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <span style="font-size: 0.75rem; color: #888; font-weight: 800; letter-spacing: 1px;">API 流量監控</span>
+        <span id="billing-percent" style="font-size: 0.7rem; color: #2ecc71; background: rgba(46, 204, 113, 0.1); padding: 2px 6px; border-radius: 4px;">安全範圍</span>
+    </div>
+    
+    <!-- 進度條 -->
+    <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-bottom: 12px; overflow: hidden;">
+        <div id="api-usage-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #2ecc71, #f1c40f); transition: 0.5s;"></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+            <div style="font-size: 0.65rem; color: #666;">預估本月消耗</div>
+            <div id="est-cost" style="font-size: 1rem; font-weight: bold; color: #fff;">$0.00</div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 0.65rem; color: #666;">剩餘免費額度</div>
+            <div id="free-remain" style="font-size: 1rem; font-weight: bold; color: var(--accent-yellow);">$200</div>
+        </div>
+    </div>
+</div>
     <!-- 這裡的背景顏色會由 JS 動態控制 -->
     <div id="user-avatar-display" style="width:55px; height:55px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:28px;">👤</div>
     <div>
@@ -521,7 +543,6 @@ function toggleApiGuide() {
         function getStoredKey() { return localStorage.getItem('EXPLORER_FINAL_SECURE_KEY') || ""; }
         function saveApiKey() { const k = document.getElementById('api-key-input').value.trim(); if(k) { localStorage.setItem('EXPLORER_FINAL_SECURE_KEY', k); document.getElementById('api-overlay').style.display='none'; alert("設定成功！請確認已啟用 Places 與 Gemini 權限。"); updateUsageDisplay(); } }
         function getUsageCount() { const today = new Date().toDateString(); const keyId = btoa(getStoredKey()).slice(-10); const stored = JSON.parse(localStorage.getItem('USAGE_'+keyId) || '{}'); return stored.date === today ? (stored.count || 0) : 0; }
-        function incrementUsage() { const today = new Date().toDateString(); const keyId = btoa(getStoredKey()).slice(-10); const count = getUsageCount() + 1; localStorage.setItem('USAGE_'+keyId, JSON.stringify({date: today, count: count})); updateUsageDisplay(); }
         function updateUsageDisplay() { const count = getUsageCount(); document.getElementById('usage-text').innerText = `今日剩餘次數：${DAILY_LIMIT - count} 次`; }
 
 
@@ -529,7 +550,9 @@ function toggleApiGuide() {
 function toggleSideMenu(show) {
     const overlay = document.getElementById('menu-overlay');
     const menu = document.getElementById('side-menu');
+    
     if (show) {
+        updateApiBillingDisplay(); // <--- 加在這裡，每次點「☰」打開選單時，它就會重算一次美金給你看
         overlay.style.display = 'block';
         setTimeout(() => menu.classList.add('active'), 10);
     } else {
@@ -537,7 +560,6 @@ function toggleSideMenu(show) {
         setTimeout(() => overlay.style.display = 'none', 300);
     }
 }
-
 // 從選單開啟 API 設定
 function openApiFromMenu() {
     toggleSideMenu(false);
@@ -1269,16 +1291,19 @@ function initSwipe(card, wrapper, res) {
     }
 
     function incrementUsage() {
-        const today = new Date().toDateString();
-        const stored = JSON.parse(localStorage.getItem('USAGE_STAT') || '{}');
-        const count = (stored.date === today ? stored.count : 0) + 1;
-        localStorage.setItem('USAGE_STAT', JSON.stringify({date: today, count: count}));
-        
-        let total = parseInt(localStorage.getItem('TOTAL_SEARCHES') || '0') + 1;
-        localStorage.setItem('TOTAL_SEARCHES', total.toString());
-        
-        updateUsageDisplay(); loadProfile();
-    }
+    const today = new Date().toDateString();
+    const stored = JSON.parse(localStorage.getItem('USAGE_STAT') || '{}');
+    const count = (stored.date === today ? stored.count : 0) + 1;
+    localStorage.setItem('USAGE_STAT', JSON.stringify({date: today, count: count}));
+    
+    // 這裡會記錄總次數，用來算帳單
+    let total = parseInt(localStorage.getItem('TOTAL_SEARCHES') || '0') + 1;
+    localStorage.setItem('TOTAL_SEARCHES', total.toString());
+    
+    updateUsageDisplay(); 
+    loadProfile(); 
+    updateApiBillingDisplay(); // <--- 就是加在這一行，讓搜尋完立刻更新帳單儀表板
+}
 
     function checkTransAvailability() {
         const transport = document.getElementById('transport').value;
@@ -1453,6 +1478,39 @@ function closeSwipe(id) {
     const content = document.getElementById(`content-${id}`);
     if (content) {
         content.style.transform = `translateX(0px)`;
+    }
+}
+
+function updateApiBillingDisplay() {
+    // Google Places Text Search (New) 每次請求約 $0.02 USD
+    const COST_PER_SEARCH = 0.02;
+    const MONTHLY_FREE_CREDIT = 200.00;
+
+    // 從本地紀錄獲取本月總搜尋次數 (我們之前已經有 TOTAL_SEARCHES)
+    const totalSearches = parseInt(localStorage.getItem('TOTAL_SEARCHES') || '0');
+    
+    // 計算消耗
+    const estimatedCost = totalSearches * COST_PER_SEARCH;
+    const remainingCredit = Math.max(0, MONTHLY_FREE_CREDIT - estimatedCost);
+    const usePercent = (estimatedCost / MONTHLY_FREE_CREDIT) * 100;
+
+    // 更新 UI
+    document.getElementById('est-cost').innerText = `$${estimatedCost.toFixed(2)}`;
+    document.getElementById('free-remain').innerText = `$${remainingCredit.toFixed(2)}`;
+    
+    const bar = document.getElementById('api-usage-bar');
+    bar.style.width = `${Math.min(100, usePercent)}%`;
+
+    // 根據使用量改變顏色警告
+    const percentLabel = document.getElementById('billing-percent');
+    if (usePercent > 80) {
+        bar.style.background = '#e74c3c';
+        percentLabel.innerText = "額度將盡";
+        percentLabel.style.color = "#e74c3c";
+    } else if (usePercent > 50) {
+        bar.style.background = '#f1c40f';
+        percentLabel.innerText = "用量中等";
+        percentLabel.style.color = "#f1c40f";
     }
 }
         
