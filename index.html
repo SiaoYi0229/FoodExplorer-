@@ -727,7 +727,7 @@ async function handleSearchClick() {
         loader.style.display = 'none';
         btn.disabled = false;
     }
-
+}
         async function fetchRealPlaces(apiKey, cfg) {
                 const userCardCount = parseInt(localStorage.getItem('EXPLORER_CARD_COUNT') || "10");
     let qFood = cfg.food.split(' / ')[0].replace(" (什麼都想吃)", "").replace("全部", "美食餐廳");
@@ -766,7 +766,7 @@ async function handleSearchClick() {
     if (data.error) throw new Error(data.error.message); // 增加錯誤偵測
     return data.places || [];
 }
-
+}
 // --- 修正後的物理距離計算函式 ---
 function calculateDistance(lat1, lon1, lat2, lon2) {
     if (!lat1 || !lon1 || !lat2 || !lon2) return "未知距離";
