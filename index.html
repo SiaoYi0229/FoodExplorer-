@@ -1259,7 +1259,7 @@ function initSwipe(card, wrapper, res) {
 
     // 6. 一鍵清空 (僅限歷史)
     function clearAllHistory() {
-        if (confirm("確定要清空探索歷史？（您的最愛店家將被完整保留）")) {
+        if (confirm("確定要清空探索歷史？")) {
             localStorage.removeItem('TASTE_HISTORY');
             renderHistoryList('all');
         }
@@ -1333,7 +1333,7 @@ function initSwipe(card, wrapper, res) {
 
     function runTypingEffect() {
         const textElem = document.getElementById('loader-text');
-        const texts = ["正在同步地理座標...", "正在挖掘巷弄美味...", "正在策劃專屬提案..."];
+        const texts = ["正在同步您的地理座標....", "正在挖掘巷弄中的隱藏美味...","正在挑選能驚艷您味蕾的驚喜...", "正在為您策劃專屬的美味提案...",
         let i = 0;
         clearInterval(loaderInterval);
         loaderInterval = setInterval(() => { i = (i + 1) % texts.length; textElem.innerText = texts[i]; }, 3000);
