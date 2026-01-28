@@ -245,11 +245,12 @@
     <div id="side-menu" onclick="event.stopPropagation()" style="position:absolute; top:0; left:-300px; width:280px; height:100%; background:rgba(20,20,20,0.95); backdrop-filter:blur(20px); border-right:1px solid rgba(255,255,255,0.1); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); display:flex; flex-direction:column; padding:40px 20px;">
         
         <!-- 使用者區塊 -->
-        <div class="user-section" onclick="openEditProfile()" style="display:flex; align-items:center; gap:15px; margin-bottom:40px; padding-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.1); cursor:pointer;">
-    <div id="user-avatar-display" style="width:60px; height:60px; background:linear-gradient(135deg, var(--primary-orange), #FFCC00); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; border:2px solid rgba(255,255,255,0.2);">👤</div>
+<div class="user-section" onclick="openEditProfile()" style="display:flex; align-items:center; gap:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:20px; cursor:pointer;">
+    <!-- 這裡的背景顏色會由 JS 動態控制 -->
+    <div id="user-avatar-display" style="width:55px; height:55px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:28px;">👤</div>
     <div>
         <div id="user-name-display" style="font-weight:bold; font-size:1.1rem; color:#fff;">美食探索者</div>
-        <div id="user-level-display" style="font-size:0.75rem; color:var(--accent-yellow);">等級：載入中...</div>
+        <div id="user-level-display" style="font-size:0.75rem; color:var(--accent-yellow);">等級：計算中...</div>
     </div>
 </div>
 
