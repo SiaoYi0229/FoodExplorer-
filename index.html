@@ -909,30 +909,26 @@ async function getAiRanking(apiKey, cfg, rawPlaces) {
      
         // --- 修改後的卡片渲染函式 ---
 function renderCards(restaurants) {
-    // 1. 初始化介面狀態
     document.getElementById('main-ui').classList.add('blur-mode');
     const stack = document.getElementById('card-stack'); 
     stack.innerHTML = ''; 
     document.getElementById('swiper-overlay').style.display = 'flex';
-    
-    // 判斷是否為最後一張（用於印章特效）
     isFinalOne = (restaurants.length === 1);
 
     restaurants.forEach((res) => {
-        // 2. 【邏輯】看過就紀錄：只要進入渲染流程，立刻存入獨立的歷史資料庫
+        // 1. 【看過就記】自動存入獨立歷史資料庫
         saveToHistory(res);
 
-        // 3. 【邏輯】檢查最愛：從獨立的最愛資料庫抓取狀態
+        // 2. 檢查最愛狀態 (從獨立的最愛資料庫抓取)
         const favorites = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
         const isAlreadyFav = favorites.some(item => item.place_id === res.place_id);
 
-        // 4. 建立 DOM 元素
         const wrapper = document.createElement('div'); 
         wrapper.className = 'swipe-card-wrapper';
-        const card = document.createElement('div'); // <-- 修正：變數宣告在此
+        const card = document.createElement('div'); // <-- 修正：確保宣告 card
         card.className = 'swipe-card';
         
-        // 5. 繪製原本所有華麗的視覺細節
+        // 3. 完美還原你原本的所有華麗視覺標籤與內容
         card.innerHTML = `
             <div class="swipe-hints"><div class="hint-item">← NOPE</div><div class="hint-item">LIKE →</div></div>
             <div class="swipe-label label-like">LIKE</div>
@@ -940,7 +936,7 @@ function renderCards(restaurants) {
             <div class="label-chosen">🏆 最終首選</div>
 
             <div class="card-content">
-                <!-- 店名與星星對齊區 -->
+                <!-- 星星與店名 -->
                 <h2 class="card-title" style="display: flex; align-items: flex-start; gap: 8px;">
                     <span class="star-btn ${isAlreadyFav ? 'active' : ''}" 
                           id="star-${res.place_id}" 
@@ -948,62 +944,56 @@ function renderCards(restaurants) {
                     <span style="flex: 1; line-height: 1.2;">${res.name}</span>
                 </h2>
                 
-                <!-- 視覺資訊標籤 -->
+                <!-- 你的三色精緻標籤 Pills -->
                 <div class="info-bar">
                     <div class="pill-yellow">⭐ googl評分 ${res.rating}</div>
                     <div class="pill-orange">📍 直線距離 ${res.distance}</div>
                     <div class="pill-price">💰 預估價位 ${res.price}</div>
                 </div>
                 
-                <!-- 詳細欄位：營業時間 -->
+                <!-- 你的詳細資訊區塊 -->
                 <div class="detail-section">
                     <div class="detail-label">🕒 營業時間</div>
                     <div class="detail-text">${res.opening_hours}</div>
                 </div>
                 
-                <!-- 詳細欄位：地址 -->
                 <div class="detail-section">
                     <div class="detail-label">🏠 餐廳地址</div>
                     <div class="detail-text">${res.address}</div>
                 </div>
                 
-                <!-- 詳細欄位：招牌菜 -->
                 <div class="detail-section">
                     <div class="detail-label">🔥 必點招牌</div>
                     <div class="detail-text">${res.signature}</div>
                 </div>
                 
-                <!-- 評論摘要 -->
+                <!-- 引言與推薦原因 -->
                 <div class="summary-quote">"${res.review_summary}"</div>
 
-                <!-- 專家推薦原因 -->
                 <div class="recommendation-box">
                     <div class="detail-label">💡 推薦原因</div>
                     <div style="color:var(--accent-yellow); font-size:1.05rem; line-height:1.7; font-weight:500;">${res.reason}</div>
                 </div>
 
-                <!-- 導航按鈕 -->
                 <a class="card-map-btn" href="${res.map_query}" target="_blank" style="margin-top:15px; height:55px; border-radius:16px;">🗺️ 打開地圖查看詳情</a>
             </div>
         `;
 
-        // 6. 事件綁定：星星按鈕（點擊與觸控）
+        // 4. 事件綁定：處理星星點擊
         const starBtn = card.querySelector('.star-btn');
         const handleStarAction = (e) => {
             e.preventDefault();
-            e.stopPropagation(); // 絕對禁止事件冒泡，不觸發卡片滑動
+            e.stopPropagation(); // 阻止滑動卡片
             toggleFavorite(res.place_id, res); 
         };
         starBtn.addEventListener('click', handleStarAction);
         starBtn.addEventListener('touchstart', handleStarAction);
         
-        // 7. 加入卡片堆疊並啟動滑動系統
         wrapper.appendChild(card); 
         stack.insertBefore(wrapper, stack.firstChild); 
         initSwipe(card, wrapper, res);
     });
     
-    // 8. 底部返回按鈕
     const closeBtn = document.createElement('button'); 
     closeBtn.className = 'close-swiper'; 
     closeBtn.innerText = '← 返回修改'; 
@@ -1167,35 +1157,81 @@ function clearAllHistory() {
     }
 }// 控制面板顯示
 // --- 歷史紀錄與最愛系統 ---
+// --- 1. 面板與重置控制 ---
 function toggleHistory(show) {
     const overlay = document.getElementById('history-overlay');
-    if (show) {
-        overlay.style.display = 'flex';
-        renderHistoryList(currentFilter);
-    } else {
-        overlay.style.display = 'none';
+    overlay.style.display = show ? 'flex' : 'none';
+    if (show) renderHistoryList(currentFilter);
+}
+
+function resetUI() {
+    document.getElementById('swiper-overlay').style.display = 'none';
+    document.getElementById('history-overlay').style.display = 'none';
+    document.getElementById('profile-overlay').style.display = 'none';
+    document.getElementById('main-ui').classList.remove('blur-mode');
+    keptRestaurants = []; isFinalOne = false;
+}
+
+// --- 2. 資料庫分家邏輯 ---
+
+// 歷史紀錄 (存入 TASTE_HISTORY)
+function saveToHistory(res) {
+    let history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
+    if (!history.some(item => item.place_id === res.place_id)) {
+        history.unshift({ ...res, savedAt: new Date().toLocaleString() });
+        if (history.length > 50) history.pop();
+        localStorage.setItem('TASTE_HISTORY', JSON.stringify(history));
     }
 }
 
+// 最愛紀錄 (存入 TASTE_FAVORITES)
+function toggleFavorite(placeId, resData) {
+    let favs = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
+    const idx = favs.findIndex(i => i.place_id === placeId);
+    let isNowFav = false;
+
+    if (idx !== -1) {
+        favs.splice(idx, 1); // 存在就移除
+    } else {
+        const foodCat = resData.category || document.getElementById('food').options[document.getElementById('food').selectedIndex].text;
+        favs.unshift({ ...resData, category: foodCat, isFav: true }); // 加入並補類別
+        isNowFav = true;
+    }
+    localStorage.setItem('TASTE_FAVORITES', JSON.stringify(favs));
+
+    // 同步更新星星顏色
+    const star = document.getElementById(`star-${placeId}`);
+    if (star) star.classList.toggle('active', isNowFav);
+    
+    // 如果在面板中點擊，即時重新渲染
+    if (document.getElementById('history-overlay').style.display === 'flex') {
+        renderHistoryList(currentFilter);
+    }
+}
+
+// --- 3. 渲染系統 ---
+
 function renderHistoryList(filter = 'all') {
     currentFilter = filter;
-    const listContainer = document.getElementById('history-list');
+    const container = document.getElementById('history-list');
     const clearBtn = document.getElementById('clear-all-btn');
-    let history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
-    history = history.filter(item => item && item.name && item.place_id);
+    
+    // 根據 filter 決定資料來源
+    let data = (filter === 'fav') 
+        ? JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]') 
+        : JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
+    
+    document.getElementById('history-title').innerText = (filter === 'fav') ? '⭐ 我的最愛' : '🕒 探索歷史';
+    clearBtn.style.display = (filter === 'fav') ? 'none' : 'block';
 
-    if (clearBtn) clearBtn.style.display = (filter === 'fav' ? 'none' : 'block');
-    document.getElementById('history-title').innerText = filter === 'fav' ? '⭐ 我的最愛' : '🕒 探索歷史';
-
-    const displayList = filter === 'fav' ? history.filter(item => item.isFav) : history;
-
-    if (displayList.length === 0) {
-        listContainer.innerHTML = `<div style="text-align:center; margin-top:100px; color:#666;">尚未紀錄任何店家</div>`;
+    if (data.length === 0) {
+        container.innerHTML = '<div style="text-align:center;margin-top:50px;color:#666;">尚未有紀錄</div>';
         return;
     }
 
     if (filter === 'fav') {
-        const groups = displayList.reduce((acc, item) => {
+        // 最愛分組顯示
+        const groups = data.reduce((acc, item) => {
             const cat = item.category || "一般探索";
             if (!acc[cat]) acc[cat] = [];
             acc[cat].push(item);
@@ -1203,18 +1239,24 @@ function renderHistoryList(filter = 'all') {
         }, {});
         let html = '';
         for (const cat in groups) {
-            html += `<div style="margin-top:15px;"><div style="color:var(--primary-orange); font-size:0.85rem; font-weight:800; padding:4px 10px; background:rgba(255,102,0,0.15); border-radius:6px; display:inline-block; margin-bottom:10px;">${cat}</div><div style="display:flex; flex-direction:column; gap:12px;">${groups[cat].map(res => renderItemHTML(res, filter)).join('')}</div></div>`;
+            html += `
+                <div style="margin-top:15px;">
+                    <div style="color:var(--primary-orange); font-size:0.85rem; font-weight:800; padding:4px 10px; background:rgba(255,102,0,0.15); border-radius:6px; display:inline-block; margin-bottom:10px;">${cat}</div>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        ${groups[cat].map(res => renderItemHTML(res, filter)).join('')}
+                    </div>
+                </div>`;
         }
-        listContainer.innerHTML = html;
+        container.innerHTML = html;
     } else {
-        listContainer.innerHTML = displayList.map(res => renderItemHTML(res, filter)).join('');
+        // 歷史直接列表顯示
+        container.innerHTML = data.map(res => renderItemHTML(res, filter)).join('');
     }
 }
 
-// 4. 單筆渲染 HTML (修正星星判斷)
 function renderItemHTML(res, filter) {
-    const favorites = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
-    const isFav = favorites.some(item => item.place_id === res.place_id);
+    const favs = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
+    const isFav = favs.some(i => i.place_id === res.place_id);
     return `
         <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:18px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
             <div style="flex:1;">
@@ -1225,70 +1267,46 @@ function renderItemHTML(res, filter) {
                 </div>
                 <div style="font-size:0.8rem; color:#aaa;">${res.address}</div>
             </div>
-            <div style="display:flex; align-items:center; gap:10px;">
+            <div style="display:flex; gap:10px;">
                 <a href="${res.map_query}" target="_blank" style="background:var(--primary-orange); color:#fff; padding:8px 12px; border-radius:10px; text-decoration:none; font-size:0.8rem; font-weight:bold;">地圖</a>
                 <button onclick="deleteSingleRecord('${res.place_id}', '${filter}')" style="background:none; border:none; color:#ff6666; font-size:1.2rem; cursor:pointer;">✕</button>
             </div>
         </div>`;
 }
 
-// 5. 單筆刪除功能 (根據 listType 決定刪哪邊)
 function deleteSingleRecord(placeId, filter) {
-    const dbName = (filter === 'fav') ? 'TASTE_FAVORITES' : 'TASTE_HISTORY';
-    if (!confirm("確定要刪除此筆紀錄嗎？")) return;
-    let data = JSON.parse(localStorage.getItem(dbName) || '[]');
-    localStorage.setItem(dbName, JSON.stringify(data.filter(i => i.place_id !== placeId)));
-    renderHistoryList(filter);
-}
-        
-function deleteSingleHistory(placeId, filter) {
-    if (!confirm("確定要刪除這筆紀錄嗎？")) return;
-    let history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
-    localStorage.setItem('TASTE_HISTORY', JSON.stringify(history.filter(i => i.place_id !== placeId)));
+    const db = (filter === 'fav') ? 'TASTE_FAVORITES' : 'TASTE_HISTORY';
+    if (!confirm("確定要刪除嗎？")) return;
+    let data = JSON.parse(localStorage.getItem(db) || '[]');
+    localStorage.setItem(db, JSON.stringify(data.filter(i => i.place_id !== placeId)));
     renderHistoryList(filter);
 }
 
-function toggleFavoriteInList(placeId, filter) {
-    let history = JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
-    const idx = history.findIndex(i => i.place_id === placeId);
-    if (idx !== -1) {
-        history[idx].isFav = !history[idx].isFav;
-        localStorage.setItem('TASTE_HISTORY', JSON.stringify(history));
-        renderHistoryList(filter);
-    }
-}
-
-// 6. 一鍵清除功能 (只清除歷史)
 function clearAllHistory() {
-    if (confirm("確定要清空所有探索歷史嗎？")) {
+    if (confirm("確定清空探索歷史？（最愛將保留）")) {
         localStorage.removeItem('TASTE_HISTORY');
         renderHistoryList('all');
     }
 }
 
-// --- 個人資料與成長系統 ---
-function getUserTitle(count) {
-    if (count < 5) return "初級吃貨";
-    if (count < 15) return "美食愛好者";
-    if (count < 30) return "巷弄探險家";
-    if (count < 50) return "資深評論員";
-    return "傳說級老饕";
+// --- 4. 個人資料與等級系統 ---
+function loadProfile() {
+    const name = localStorage.getItem('U_NAME') || "美食探索者";
+    const avatar = localStorage.getItem('U_AVATAR') || "👤";
+    const bgColor = localStorage.getItem('U_BG_COLOR') || "#FF6600";
+    const total = parseInt(localStorage.getItem('TOTAL_SEARCHES') || '0');
+    
+    document.getElementById('user-name-display').innerText = name;
+    document.getElementById('user-avatar-display').innerText = avatar;
+    const circle = document.getElementById('user-avatar-display');
+    circle.style.background = bgColor;
+    circle.style.boxShadow = `0 0 20px ${bgColor}44`;
+
+    const titles = ["初級吃貨", "美食愛愛好者", "巷弄探險家", "資深評論員", "傳說級老饕"];
+    let idx = Math.min(Math.floor(total/10), titles.length - 1);
+    document.getElementById('user-level-display').innerText = `等級：${titles[idx]} (${total}次)`;
 }
 
-function incrementUsage() {
-    const today = new Date().toDateString();
-    const keyId = btoa(getStoredKey()).slice(-10);
-    const count = getUsageCount() + 1;
-    localStorage.setItem('USAGE_'+keyId, JSON.stringify({date: today, count: count}));
-    
-    let total = parseInt(localStorage.getItem('TOTAL_SEARCHES') || '0') + 1;
-    localStorage.setItem('TOTAL_SEARCHES', total.toString());
-    
-    updateUsageDisplay();
-    loadProfile();
-}
-
-// --- 修改後的：開啟編輯面版 (預載入目前顏色) ---
 function openEditProfile() {
     document.getElementById('edit-name').value = localStorage.getItem('U_NAME') || "美食探索者";
     document.getElementById('edit-avatar').value = localStorage.getItem('U_AVATAR') || "👤";
@@ -1296,48 +1314,26 @@ function openEditProfile() {
     document.getElementById('profile-overlay').style.display = 'flex';
 }
 
-
-// --- 修改後的：儲存個人資料 ---
 function saveProfile() {
-    const newName = document.getElementById('edit-name').value.trim();
-    const newAvatar = document.getElementById('edit-avatar').value.trim();
-    const newBgColor = document.getElementById('edit-bg-color').value; // 抓取色盤顏色
-
-    if (newName) localStorage.setItem('U_NAME', newName);
-    if (newAvatar) localStorage.setItem('U_AVATAR', newAvatar);
-    localStorage.setItem('U_BG_COLOR', newBgColor); // 儲存顏色 hex code
-    
+    localStorage.setItem('U_NAME', document.getElementById('edit-name').value.trim());
+    localStorage.setItem('U_AVATAR', document.getElementById('edit-avatar').value.trim());
+    localStorage.setItem('U_BG_COLOR', document.getElementById('edit-bg-color').value);
     document.getElementById('profile-overlay').style.display = 'none';
-    loadProfile(); // 立即重新載入
-}
-
-
-// --- 修改後的：載入個人資料 ---
-function loadProfile() {
-    const name = localStorage.getItem('U_NAME') || "美食探索者";
-    const avatar = localStorage.getItem('U_AVATAR') || "👤";
-    const bgColor = localStorage.getItem('U_BG_COLOR') || "#FF6600";
-    const total = parseInt(localStorage.getItem('TOTAL_SEARCHES') || '0');
-
-    document.getElementById('user-name-display').innerText = name;
-    document.getElementById('user-avatar-display').innerText = avatar;
-    
-    const avatarCircle = document.getElementById('user-avatar-display');
-    avatarCircle.style.background = bgColor;
-    avatarCircle.style.boxShadow = `0 0 20px ${bgColor}44`;
-
-    const titles = ["初級吃貨", "美食愛好者", "巷弄探險家", "資深評論員", "傳說級老饕"];
-    let titleIdx = Math.min(Math.floor(total / 10), titles.length - 1);
-    document.getElementById('user-level-display').innerText = `等級：${titles[titleIdx]} (${total}次)`;
+    loadProfile();
 }
     </script> 
 
+    <!-- 面板區：探索歷史與最愛 -->
     <div id="history-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); backdrop-filter:blur(25px); -webkit-backdrop-filter:blur(25px); z-index:9000; padding:30px 20px; flex-direction:column; color:white;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <!-- 給標題一個 ID 以便動態更換 -->
             <h2 id="history-title" style="color:var(--primary-orange); margin:0; font-size:1.5rem;">🕒 探索歷史</h2>
             <button onclick="toggleHistory(false)" style="background:none; border:none; color:#fff; font-size:1.8rem; cursor:pointer;">✕</button>
         </div>
+        <div id="history-list" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:15px; padding-bottom:20px;"></div>
+        <button id="clear-all-btn" onclick="clearAllHistory()" style="width:100%; padding:15px; background:rgba(255,102,0,0.1); border:1px solid var(--primary-orange); color:var(--primary-orange); border-radius:12px; font-weight:bold; cursor:pointer;">清除所有紀錄</button>
+    </div>
+</body>
+</html>
         
         <!-- 店家清單容器 -->
         <div id="history-list" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:15px; padding-bottom:20px;">
