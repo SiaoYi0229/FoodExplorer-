@@ -139,35 +139,30 @@
         #edit-bg-color::-webkit-color-swatch { border: none; }
     </style>
 </head>
-<body>
 <body touch-action="none">
-     <!-- 個人資料設定彈窗內 -->
-<div id="profile-overlay" ...>
-    <div class="api-card" style="text-align:center;">
-        <h2 style="color:#fff; margin-bottom:20px;">👤 編輯個人資料</h2>
-        
-        <!-- 頭像與稱呼 (原本的) -->
-        <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 20px;">
-            <div style="flex: 1;">
-                <label style="display:block; margin-bottom:8px; color:#aaa; font-size: 0.8rem;">頭像 Emoji</label>
-                <input type="text" id="edit-avatar" class="api-input" style="font-size:1.5rem; padding: 10px;" maxlength="2">
-            </div>
-            <div style="flex: 1;">
-                <label style="display:block; margin-bottom:8px; color:#aaa; font-size: 0.8rem;">背景顏色</label>
-                <!-- 核心：系統色盤按鈕 -->
-                <input type="color" id="edit-bg-color" style="width: 100%; height: 45px; border: none; background: transparent; cursor: pointer;">
-            </div>
-        </div>
 
-        <div style="margin-bottom:25px;">
-            <label style="display:block; margin-bottom:10px; color:#aaa;">你的稱呼</label>
-            <input type="text" id="edit-name" class="api-input" placeholder="輸入名字...">
+    <!-- 1. 個人資料彈窗 -->
+    <div id="profile-overlay">
+        <div class="api-card" style="text-align:center;">
+            <h2 style="color:#fff;">👤 編輯個人資料</h2>
+            <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <label style="color:#aaa; font-size: 0.8rem; margin-bottom: 5px;">頭像 Emoji</label>
+                    <input type="text" id="edit-avatar" class="api-input" style="font-size:1.5rem;" maxlength="2">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color:#aaa; font-size: 0.8rem; margin-bottom: 5px;">背景顏色</label>
+                    <input type="color" id="edit-bg-color" style="width: 100%; height: 48px; border: none; background: transparent; cursor: pointer; padding:0">
+                </div>
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="color:#aaa; font-size: 0.8rem; margin-bottom: 5px;">你的稱呼</label>
+                <input type="text" id="edit-name" class="api-input" placeholder="輸入名字...">
+            </div>
+            <button class="api-save-btn" onclick="saveProfile()">儲存個人設定</button>
+            <button onclick="document.getElementById('profile-overlay').style.display='none'" style="background:none; border:none; color:#555; margin-top:15px; cursor:pointer;">取消返回</button>
         </div>
-
-        <button class="api-save-btn" onclick="saveProfile()">儲存個人設定</button>
-        <button onclick="document.getElementById('profile-overlay').style.display='none'" style="...">取消</button>
     </div>
-</div>
     <div id="api-overlay">
     <div class="api-card">
         <h2 style="color: #fff; margin: 0;">🔑 探索功能設定</h2>
