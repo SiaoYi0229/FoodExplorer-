@@ -137,18 +137,8 @@
         /* 讓 iOS 上的色盤按鈕看起來更扁平化 */
         #edit-bg-color::-webkit-color-swatch-wrapper { padding: 0; }
         #edit-bg-color::-webkit-color-swatch { border: none; }
-
-        /* 滑動容器：隱藏溢出 */
-       .swipe-item-wrapper {position: relative;overflow: hidden;border-radius: 18px;background: #ff3b30; /* iOS 刪除紅 */margin-bottom: 12px;}
-        /* 內容層：平常蓋在上面 */
-       .swipe-item-content {position: relative;z-index: 2;background: rgba(40, 40, 40, 0.95);backdrop-filter: blur(10px);padding: 15px;border: 1px solid rgba(255, 255, 255, 0.1);border-radius: 18px;transition: transform 0.3s ease;display: flex;justify-content: space-between;align-items: center;}
-       /* 刪除按鈕層：藏在右側後面 */
-       .swipe-delete-action {position: absolute;right: 0;top: 0;height: 100%;width: 80px;display: flex;align-items: center;justify-content: center;color: white;font-weight: bold;font-size: 0.9rem;z-index: 1;cursor: pointer;}
-       
-       
     </style>
 </head>
-<body>
     <div id="api-overlay">
     <div class="api-card">
         <h2 style="color: #fff; margin: 0;">🔑 探索功能設定</h2>
@@ -209,8 +199,9 @@
     </div>
     <p id="loader-text" class="loader-text">正在同步您的地理座標...</p>
 </div> 
+</div>
     <div class="container" id="main-ui">
- <!-- 全新 App 標頭結構 -->
+        <!-- 全新 App 標頭結構 -->
 <div class="header" style="width: 100%; position: relative; display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
     
     <!-- 左側選單觸發按鈕 (已調至最左上角落) -->
@@ -252,32 +243,10 @@
         <span class="menu-icon">⚙️</span> 系統參數設定
     </div>
         </div>
-        <!-- API 流量儀錶板 -->
-<div id="api-dashboard" style="background: rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 15px; margin: 15px 0; border: 1px solid rgba(255, 255, 255, 0.1);">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <span style="font-size: 0.75rem; color: #888; font-weight: 800; letter-spacing: 1px;">API 流量監控</span>
-        <span id="billing-percent" style="font-size: 0.7rem; color: #2ecc71; background: rgba(46, 204, 113, 0.1); padding: 2px 6px; border-radius: 4px;">安全範圍</span>
-    </div>
-    
-    <!-- 進度條 -->
-    <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-bottom: 12px; overflow: hidden;">
-        <div id="api-usage-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #2ecc71, #f1c40f); transition: 0.5s;"></div>
-    </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div>
-            <div style="font-size: 0.65rem; color: #666;">預估本月消耗</div>
-            <div id="est-cost" style="font-size: 1rem; font-weight: bold; color: #fff;">$0.00</div>
-        </div>
-        <div style="text-align: right;">
-            <div style="font-size: 0.65rem; color: #666;">剩餘免費額度</div>
-            <div id="free-remain" style="font-size: 1rem; font-weight: bold; color: var(--accent-yellow);">$200</div>
-        </div>
-    </div>
-</div>
         <div style="margin-top:auto; font-size:0.7rem; color:#444; text-align:center;">TasteExplorer v2.5 Beta</div>
     </div>
-    </div>
+</div>
         <div class="glass-card">
             <div id="location-display" class="location-status" onclick="toggleNearbyMode()">
                 <div class="location-dot"></div>
@@ -511,6 +480,7 @@ function toggleApiGuide() {
         function getStoredKey() { return localStorage.getItem('EXPLORER_FINAL_SECURE_KEY') || ""; }
         function saveApiKey() { const k = document.getElementById('api-key-input').value.trim(); if(k) { localStorage.setItem('EXPLORER_FINAL_SECURE_KEY', k); document.getElementById('api-overlay').style.display='none'; alert("設定成功！請確認已啟用 Places 與 Gemini 權限。"); updateUsageDisplay(); } }
         function getUsageCount() { const today = new Date().toDateString(); const keyId = btoa(getStoredKey()).slice(-10); const stored = JSON.parse(localStorage.getItem('USAGE_'+keyId) || '{}'); return stored.date === today ? (stored.count || 0) : 0; }
+        function incrementUsage() { const today = new Date().toDateString(); const keyId = btoa(getStoredKey()).slice(-10); const count = getUsageCount() + 1; localStorage.setItem('USAGE_'+keyId, JSON.stringify({date: today, count: count})); updateUsageDisplay(); }
         function updateUsageDisplay() { const count = getUsageCount(); document.getElementById('usage-text').innerText = `今日剩餘次數：${DAILY_LIMIT - count} 次`; }
 
 
@@ -518,9 +488,7 @@ function toggleApiGuide() {
 function toggleSideMenu(show) {
     const overlay = document.getElementById('menu-overlay');
     const menu = document.getElementById('side-menu');
-    
     if (show) {
-        updateApiBillingDisplay(); // <--- 加在這裡，每次點「☰」打開選單時，它就會重算一次美金給你看
         overlay.style.display = 'block';
         setTimeout(() => menu.classList.add('active'), 10);
     } else {
@@ -528,6 +496,7 @@ function toggleSideMenu(show) {
         setTimeout(() => overlay.style.display = 'none', 300);
     }
 }
+
 // 從選單開啟 API 設定
 function openApiFromMenu() {
     toggleSideMenu(false);
@@ -585,49 +554,89 @@ function toggleFavorite(placeId, resData) {
 
 // 渲染清單 (增加過濾功能)
 let currentFilter = 'all'; // 'all' 或 'fav'
-
-
-   let typingTimer = null;
-
-function runTypingEffect() {
-    const textElem = document.getElementById('loader-text');
-    const texts = [
-        "正在同步您的地理座標...",
-        "正在挖掘巷弄中的隱藏美味...",
-        "正在挑選能驚艷您味蕾的驚喜...",
-        "正在為您策劃專屬的美味提案..."
-    ];
+// 3. 渲染清單 (根據 filter 抓取不同資料庫)
+function renderHistoryList(filter = 'all') {
+    const listContainer = document.getElementById('history-list');
+    const clearBtn = document.getElementById('clear-all-btn');
     
-    let i = 0;
-    
-    // 清除舊的計時器
-    if (loaderInterval) clearInterval(loaderInterval);
-    if (typingTimer) clearInterval(typingTimer);
+    // 關鍵：根據模式選擇資料庫
+    let data = (filter === 'fav') 
+        ? JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]') 
+        : JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
 
-    function typeChar(text) {
-        textElem.innerText = "";
+    document.getElementById('history-title').innerText = (filter === 'fav') ? '⭐ 我的最愛' : '🕒 探索歷史';
+    if (clearBtn) clearBtn.style.display = (filter === 'fav') ? 'none' : 'block';
+
+    if (data.length === 0) {
+        listContainer.innerHTML = `<div style="text-align:center; margin-top:100px; color:#666;">尚未有紀錄</div>`;
+        return;
+    }
+
+    if (filter === 'fav') {
+        // 最愛模式：執行類別分組
+        const groups = data.reduce((acc, item) => {
+            const cat = item.category || "一般探索";
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(item);
+            return acc;
+        }, {});
+
+        let html = '';
+        for (const cat in groups) {
+            html += `
+                <div style="margin-top:15px;">
+                    <div style="color:var(--primary-orange); font-size:0.85rem; font-weight:800; padding:4px 10px; background:rgba(255,102,0,0.15); border-radius:6px; display:inline-block; margin-bottom:10px;">${cat}</div>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        ${groups[cat].map(res => renderItemHTML(res, filter)).join('')}
+                    </div>
+                </div>`;
+        }
+        listContainer.innerHTML = html;
+    } else {
+        // 歷史模式：直接排列
+        listContainer.innerHTML = data.map(res => renderItemHTML(res, filter)).join('');
+    }
+}
+
+
+        
+        // --- 核心修正：自動打字機計時器 ---
+        let typingTimer;
+        function runTypingEffect() {
+        const textElem = document.getElementById('loader-text');
+        const texts = [
+             "正在同步您的地理座標...",
+             "正在挖掘巷弄中的隱藏美味...",
+             "正在挑選能驚艷您味蕾的驚喜...",
+             "正在為您策劃專屬的美味提案..." ];
+        let stage = 0;
+    
+        // 單個文字打字函式
+        function typeChar(text) {
+        textElem.innerHTML = "";
         let charIndex = 0;
         if (typingTimer) clearInterval(typingTimer);
         typingTimer = setInterval(() => {
             if (charIndex < text.length) {
-                textElem.innerText += text.charAt(charIndex);
+                textElem.innerHTML += text.charAt(charIndex);
                 charIndex++;
             } else {
                 clearInterval(typingTimer);
             }
-        }, 50); // 打字速度
+        }, 100); 
     }
 
-    // 立即執行第一次
-    typeChar(texts[i]);
-
-    // 每 4 秒切換下一句
+    typeChar(texts[0]);
+    if (loaderInterval) clearInterval(loaderInterval);
     loaderInterval = setInterval(() => {
-        i = (i + 1) % texts.length;
-        typeChar(texts[i]);
-    }, 4000);
+        stage++;
+        if (stage < texts.length) {
+            typeChar(texts[stage]);
+        } else {
+            clearInterval(loaderInterval); 
+        }
+    }, 7000); // <--- 已從 10000 改為 7000
 }
-        
        
 async function handleSearchClick() {
     const apiKey = getStoredKey();
@@ -671,29 +680,29 @@ async function handleSearchClick() {
     const loader = document.getElementById('loader');
     const btn = document.getElementById('search-btn');
     
-    // 1. 啟動 UI 載入狀態
+    // 啟動 UI 載入狀態
     loader.style.display = 'flex';
     runTypingEffect(); // 啟動打字機動效
     btn.disabled = true;
 
     try {
-        // 2. 第一階段：獲取 Google 地圖原始數據
+        // --- 第一階段：獲取 Google 地圖原始數據 ---
         const rawPlaces = await fetchRealPlaces(apiKey, config);
         
         if (!rawPlaces || rawPlaces.length === 0) {
             throw new Error("在該區域找不到符合條件的店家，請放寬搜尋條件。");
         }
 
-        // 3. 第二階段：進行 AI 鑑定與理由生成 (這裡會用到 Gemini)
+        // --- 第二階段：進行 AI 鑑定與理由生成 ---
         const finalRecommendations = await getAiRanking(apiKey, config, rawPlaces);
 
-        // 4. 第三階段：渲染結果
+        // --- 第三階段：渲染結果 ---
         if (finalRecommendations && finalRecommendations.length > 0) {
-            incrementUsage(); // 這裡會連動更新你剛加的「API 流量監控」
+            incrementUsage();
             keptRestaurants = []; 
             isFinalOne = false;
 
-            // 加入食物分類標籤，方便歷史紀錄分類
+            // 核心：加入分類標籤
             const foodCategory = config.food; 
             const taggedRecommendations = finalRecommendations.map(res => ({
                 ...res,
@@ -706,25 +715,31 @@ async function handleSearchClick() {
         console.error("探索過程發生錯誤:", e);
         let errorMsg = e.message;
         
-        // 精準錯誤引導
+        // 這是你最關鍵的邏輯：精準導引用戶去修復 API 設定
         if (errorMsg.includes("Places API")) {
-            errorMsg = "❌ 地圖權限未開啟！\n請進入 Google Cloud 控制台啟用「Places API (New)」，並確認已綁定信用卡（結算帳戶）。";
+            errorMsg = "❌ 地圖權限未開啟！\n請點擊右上角⚙️進入設定，點擊教學中的「Places API」連結並啟用，並確認已綁定結算帳戶。";
         } else if (errorMsg.includes("Generative Language") || errorMsg.includes("Gemini")) {
-            errorMsg = "❌ AI 權限未開啟！\n請確認你的 API Key 已啟用「Generative Language API」。";
+            errorMsg = "❌ AI 權限未開啟！\n請點擊右上角⚙️進入設定，點擊教學中的「Gemini API」連結並啟用。";
         } else if (errorMsg.includes("Candidates")) {
-            errorMsg = "❌ AI 無法產生推薦，可能是因為區域內店家資訊不足或 API Key 限制。";
+            errorMsg = "❌ AI 無法產生推薦，通常是因為 API Key 尚未生效或結算帳戶 (信用卡) 有問題。";
+        } else if (errorMsg.includes("quota")) {
+            errorMsg = "⚠️ API 額度已達上限，請明天再試或更換 Key。";
         }
         
         alert(errorMsg);
     } finally {
-        // 5. 停止動畫並恢復按鈕
+        // --- 結束清理：這部分非常重要 ---
+        // 停止打字機的所有 Interval，避免背景持續運算
         if (loaderInterval) clearInterval(loaderInterval);
         if (typingTimer) clearInterval(typingTimer);
         
+        // 關閉載入畫面，恢復按鈕功能
         loader.style.display = 'none';
         btn.disabled = false;
     }
 }
+
+
         async function fetchRealPlaces(apiKey, cfg) {
                 const userCardCount = parseInt(localStorage.getItem('EXPLORER_CARD_COUNT') || "10");
     let qFood = cfg.food.split(' / ')[0].replace(" (什麼都想吃)", "").replace("全部", "美食餐廳");
@@ -763,6 +778,7 @@ async function handleSearchClick() {
     if (data.error) throw new Error(data.error.message); // 增加錯誤偵測
     return data.places || [];
 }
+
 // --- 修正後的物理距離計算函式 ---
 function calculateDistance(lat1, lon1, lat2, lon2) {
     if (!lat1 || !lon1 || !lat2 || !lon2) return "未知距離";
@@ -783,7 +799,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     } else {
         return `🚶 步行約 ${d.toFixed(1)}km`;
     }
-} 
+} // <--- 補上這個括號，解決 "not defined" 的關鍵
     
 
 
@@ -1155,53 +1171,38 @@ function initSwipe(card, wrapper, res) {
 
     // 4. 產生單筆紀錄的 HTML (還原 100% 視覺細節)
     function renderItemHTML(res, filter) {
-    // 檢查是否有筆記
-    const favs = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
-    const isFav = favs.some(i => i.place_id === res.place_id);
-    const hasNote = favs.find(i => i.place_id === res.place_id && (i.userNote || i.userImage));
-
-    return `
-        <div class="swipe-item-wrapper" id="wrapper-${res.place_id}">
-            <!-- 底層刪除按鈕 -->
-            <div class="swipe-delete-action" onclick="deleteSingleRecord('${res.place_id}', '${filter}')">刪除</div>
-            
-            <!-- 上層內容 -->
-            <div class="swipe-item-content" 
-                 id="content-${res.place_id}"
-                 ontouchstart="handleListTouchStart(event, '${res.place_id}')"
-                 ontouchmove="handleListTouchMove(event, '${res.place_id}')"
-                 ontouchend="handleListTouchEnd(event, '${res.place_id}')">
-                
-                <div style="flex:1; padding-right:10px;" onclick="${filter === 'fav' ? `openNoteEditor('${res.place_id}')` : ''}">
-                    <div style="font-weight:bold; color:#fff; font-size:1.1rem; line-height:1.2;">
-                        ${res.name} ${hasNote ? '📝' : ''}
+        const favorites = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
+        const isFav = favorites.some(item => item.place_id === res.place_id);
+        
+        return `
+            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:18px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                <div style="flex:1;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+                        <span onclick="toggleFavorite('${res.place_id}', ${JSON.stringify(res).replace(/"/g, '&quot;')})" 
+                              style="cursor:pointer; font-size:1.5rem; color:${isFav ? '#FFCC00' : 'rgba(255,255,255,0.2)'};">★</span>
+                        <div style="font-weight:bold; color:#fff; font-size:1.1rem; line-height:1.2;">${res.name}</div>
                     </div>
-                    <div style="font-size:0.75rem; color:#aaa; margin-top:4px;">${res.address}</div>
+                    <div style="font-size:0.8rem; color:#aaa;">${res.address}</div>
                 </div>
-
                 <div style="display:flex; align-items:center; gap:10px;">
                     <a href="${res.map_query}" target="_blank" style="background:var(--primary-orange); color:#fff; padding:8px 12px; border-radius:10px; text-decoration:none; font-size:0.8rem; font-weight:bold;">地圖</a>
-                    <!-- 原本的 ✕ 按鈕已移除，改由左滑觸發 -->
+                    <button onclick="deleteSingleRecord('${res.place_id}', '${filter}')" style="background:none; border:none; color:#ff6666; font-size:1.2rem; cursor:pointer;">✕</button>
                 </div>
-            </div>
-        </div>`;
-}
+            </div>`;
+    }
+
     // 5. 獨立刪除邏輯
     function deleteSingleRecord(placeId, filter) {
-    const dbName = (filter === 'fav') ? 'TASTE_FAVORITES' : 'TASTE_HISTORY';
-    
-    // 這裡不使用 confirm 彈窗，讓刪除像蘋果一樣順暢，或者你可以保留
-    let list = JSON.parse(localStorage.getItem(dbName) || '[]');
-    list = list.filter(item => item.place_id !== placeId);
-    localStorage.setItem(dbName, JSON.stringify(list));
-    
-    activeSwipeId = null; // 重置滑動狀態
-    renderHistoryList(filter); // 重新渲染清單
-}
+        const dbName = (filter === 'fav') ? 'TASTE_FAVORITES' : 'TASTE_HISTORY';
+        if (!confirm("確定要刪除此筆紀錄嗎？")) return;
+        let list = JSON.parse(localStorage.getItem(dbName) || '[]');
+        localStorage.setItem(dbName, JSON.stringify(list.filter(i => i.place_id !== placeId)));
+        renderHistoryList(filter);
+    }
 
     // 6. 一鍵清空 (僅限歷史)
     function clearAllHistory() {
-        if (confirm("確定要清空探索歷史？")) {
+        if (confirm("確定要清空探索歷史？（您的最愛店家將被完整保留）")) {
             localStorage.removeItem('TASTE_HISTORY');
             renderHistoryList('all');
         }
@@ -1250,19 +1251,16 @@ function initSwipe(card, wrapper, res) {
     }
 
     function incrementUsage() {
-    const today = new Date().toDateString();
-    const stored = JSON.parse(localStorage.getItem('USAGE_STAT') || '{}');
-    const count = (stored.date === today ? stored.count : 0) + 1;
-    localStorage.setItem('USAGE_STAT', JSON.stringify({date: today, count: count}));
-    
-    // 這裡會記錄總次數，用來算帳單
-    let total = parseInt(localStorage.getItem('TOTAL_SEARCHES') || '0') + 1;
-    localStorage.setItem('TOTAL_SEARCHES', total.toString());
-    
-    updateUsageDisplay(); 
-    loadProfile(); 
-    updateApiBillingDisplay(); // <--- 就是加在這一行，讓搜尋完立刻更新帳單儀表板
-}
+        const today = new Date().toDateString();
+        const stored = JSON.parse(localStorage.getItem('USAGE_STAT') || '{}');
+        const count = (stored.date === today ? stored.count : 0) + 1;
+        localStorage.setItem('USAGE_STAT', JSON.stringify({date: today, count: count}));
+        
+        let total = parseInt(localStorage.getItem('TOTAL_SEARCHES') || '0') + 1;
+        localStorage.setItem('TOTAL_SEARCHES', total.toString());
+        
+        updateUsageDisplay(); loadProfile();
+    }
 
     function checkTransAvailability() {
         const transport = document.getElementById('transport').value;
@@ -1276,7 +1274,13 @@ function initSwipe(card, wrapper, res) {
         box.style.display = (box.style.display === 'none') ? 'block' : 'none';
     }
 
- 
+    function runTypingEffect() {
+        const textElem = document.getElementById('loader-text');
+        const texts = ["正在同步地理座標...", "正在挖掘巷弄美味...", "正在策劃專屬提案..."];
+        let i = 0;
+        clearInterval(loaderInterval);
+        loaderInterval = setInterval(() => { i = (i + 1) % texts.length; textElem.innerText = texts[i]; }, 3000);
+    }
 
         // --- 系統設定功能 ---
 
@@ -1309,170 +1313,6 @@ function saveSettings() {
     keptRestaurants = [];
     isFinalOne = false;
 }
-
-        let currentEditingShopId = null;
-
-// 1. 開啟筆記編輯器
-function openNoteEditor(placeId) {
-    let favs = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
-    const shop = favs.find(i => i.place_id === placeId);
-    if (!shop) return;
-
-    currentEditingShopId = placeId;
-    document.getElementById('note-shop-name').innerText = shop.name;
-    document.getElementById('note-text-area').value = shop.userNote || "";
-    
-    const preview = document.getElementById('note-img-preview');
-    const hint = document.getElementById('note-upload-hint');
-    if (shop.userImage) {
-        preview.src = shop.userImage;
-        preview.style.display = "block";
-        hint.style.display = "none";
-    } else {
-        preview.style.display = "none";
-        hint.style.display = "block";
-    }
-    
-    document.getElementById('note-overlay').style.display = 'flex';
-}
-
-// 2. 處理圖片上傳並壓縮 (關鍵：防止超過 LocalStorage 限制)
-function handleNoteImage(input) {
-    const file = input.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            // 建立畫布來壓縮圖片
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 400; // 縮小尺寸
-            let width = img.width;
-            let height = img.height;
-
-            if (width > MAX_WIDTH) {
-                height *= MAX_WIDTH / width;
-                width = MAX_WIDTH;
-            }
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            // 轉換為低質量的 base64 存入
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-            document.getElementById('note-img-preview').src = compressedBase64;
-            document.getElementById('note-img-preview').style.display = "block";
-            document.getElementById('note-upload-hint').style.display = "none";
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-// 3. 儲存筆記到資料庫
-function saveShopNote() {
-    let favs = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
-    const idx = favs.findIndex(i => i.place_id === currentEditingShopId);
-    
-    if (idx !== -1) {
-        favs[idx].userNote = document.getElementById('note-text-area').value;
-        const previewSrc = document.getElementById('note-img-preview').src;
-        // 如果預覽圖是 Base64 格式才存入
-        favs[idx].userImage = previewSrc.startsWith('data:image') ? previewSrc : null;
-        
-        localStorage.setItem('TASTE_FAVORITES', JSON.stringify(favs));
-        document.getElementById('note-overlay').style.display = 'none';
-        renderHistoryList('fav'); // 刷新清單顯示 📝 圖示
-        alert("心得已收藏！");
-    }
-}
-
-let listTouchStart = 0;
-let listTouchCurrent = 0;
-let activeSwipeId = null;
-
-function handleListTouchStart(e, id) {
-    // 如果有其他項開著，先關掉
-    if (activeSwipeId && activeSwipeId !== id) {
-        closeSwipe(activeSwipeId);
-    }
-    listTouchStart = e.touches[0].clientX;
-    const content = document.getElementById(`content-${id}`);
-    content.style.transition = "none";
-}
-
-function handleListTouchMove(e, id) {
-    listTouchCurrent = e.touches[0].clientX;
-    let diff = listTouchCurrent - listTouchStart;
-    const content = document.getElementById(`content-${id}`);
-
-    // 只允許向左滑動，且最大滑動距離 80px
-    if (diff < 0 && diff > -120) {
-        content.style.transform = `translateX(${diff}px)`;
-    }
-}
-
-function handleListTouchEnd(e, id) {
-    const content = document.getElementById(`content-${id}`);
-    content.style.transition = "transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28)";
-    
-    let diff = listTouchCurrent - listTouchStart;
-
-    if (diff < -50) {
-        // 滑動超過 50px，固定在「刪除按鈕」開啟狀態
-        content.style.transform = `translateX(-80px)`;
-        activeSwipeId = id;
-    } else {
-        // 滑動不足，彈回
-        content.style.transform = `translateX(0px)`;
-        activeSwipeId = null;
-    }
-    listTouchStart = 0;
-    listTouchCurrent = 0;
-}
-
-function closeSwipe(id) {
-    const content = document.getElementById(`content-${id}`);
-    if (content) {
-        content.style.transform = `translateX(0px)`;
-    }
-}
-
-function updateApiBillingDisplay() {
-    // Google Places Text Search (New) 每次請求約 $0.02 USD
-    const COST_PER_SEARCH = 0.02;
-    const MONTHLY_FREE_CREDIT = 200.00;
-
-    // 從本地紀錄獲取本月總搜尋次數 (我們之前已經有 TOTAL_SEARCHES)
-    const totalSearches = parseInt(localStorage.getItem('TOTAL_SEARCHES') || '0');
-    
-    // 計算消耗
-    const estimatedCost = totalSearches * COST_PER_SEARCH;
-    const remainingCredit = Math.max(0, MONTHLY_FREE_CREDIT - estimatedCost);
-    const usePercent = (estimatedCost / MONTHLY_FREE_CREDIT) * 100;
-
-    // 更新 UI
-    document.getElementById('est-cost').innerText = `$${estimatedCost.toFixed(2)}`;
-    document.getElementById('free-remain').innerText = `$${remainingCredit.toFixed(2)}`;
-    
-    const bar = document.getElementById('api-usage-bar');
-    bar.style.width = `${Math.min(100, usePercent)}%`;
-
-    // 根據使用量改變顏色警告
-    const percentLabel = document.getElementById('billing-percent');
-    if (usePercent > 80) {
-        bar.style.background = '#e74c3c';
-        percentLabel.innerText = "額度將盡";
-        percentLabel.style.color = "#e74c3c";
-    } else if (usePercent > 50) {
-        bar.style.background = '#f1c40f';
-        percentLabel.innerText = "用量中等";
-        percentLabel.style.color = "#f1c40f";
-    }
-}
-        
     </script> 
 
     <div id="settings-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(15px); z-index:12000; align-items:center; justify-content:center; padding:20px;">
@@ -1530,17 +1370,5 @@ function updateApiBillingDisplay() {
         <button onclick="document.getElementById('profile-overlay').style.display='none'" style="background:none; border:none; color:#555; margin-top:15px; cursor:pointer;">✕ 取消返回</button>
     </div>
 </div>
-    <div id="note-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(15px); z-index:15000; align-items:center; justify-content:center; padding:20px;">
-    <div class="api-card" style="max-width: 400px;">
-        <h2 id="note-shop-name" style="color:#fff; margin-bottom:10px;">店名</h2>
-        <div id="note-upload-area" onclick="document.getElementById('note-file-input').click()" style="width:100%; height:150px; background:rgba(255,255,255,0.05); border:2px dashed rgba(255,255,255,0.2); border-radius:15px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; overflow:hidden;">
-            <img id="note-img-preview" style="width:100%; height:100%; object-fit:cover; display:none;">
-            <span id="note-upload-hint" style="color:#666;">📸 點擊上傳食物照片</span>
-            <input type="file" id="note-file-input" hidden accept="image/*" onchange="handleNoteImage(this)">
-        </div>
-        <textarea id="note-text-area" class="api-input" style="height:100px; margin-top:15px; text-align:left;" placeholder="寫下你的用餐筆記..."></textarea>
-        <button class="api-save-btn" style="margin-top:15px;" onclick="saveShopNote()">儲存心得</button>
-        <button onclick="document.getElementById('note-overlay').style.display='none'" style="background:none; border:none; color:#555; margin-top:15px; cursor:pointer; width:100%;">✕ 取消</button>
-    </div>
 </body>
 </html>
