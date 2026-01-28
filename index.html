@@ -1171,26 +1171,33 @@ function initSwipe(card, wrapper, res) {
 
     // 4. 產生單筆紀錄的 HTML (還原 100% 視覺細節)
     function renderItemHTML(res, filter) {
-        const favorites = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
-        const isFav = favorites.some(item => item.place_id === res.place_id);
-        
-        return `
-            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:18px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
-                <div style="flex:1;">
-                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
-                        <span onclick="toggleFavorite('${res.place_id}', ${JSON.stringify(res).replace(/"/g, '&quot;')})" 
-                              style="cursor:pointer; font-size:1.5rem; color:${isFav ? '#FFCC00' : 'rgba(255,255,255,0.2)'};">★</span>
-                        <div style="font-weight:bold; color:#fff; font-size:1.1rem; line-height:1.2;">${res.name}</div>
-                    </div>
-                    <div style="font-size:0.8rem; color:#aaa;">${res.address}</div>
-                </div>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <a href="${res.map_query}" target="_blank" style="background:var(--primary-orange); color:#fff; padding:8px 12px; border-radius:10px; text-decoration:none; font-size:0.8rem; font-weight:bold;">地圖</a>
-                    <button onclick="deleteSingleRecord('${res.place_id}', '${filter}')" style="background:none; border:none; color:#ff6666; font-size:1.2rem; cursor:pointer;">✕</button>
-                </div>
-            </div>`;
-    }
+    const favorites = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
+    const favItem = favorites.find(item => item.place_id === res.place_id);
+    const isFav = !!favItem;
+    // 檢查是否有筆記
+    const hasNote = favItem && (favItem.userNote || favItem.userImage);
 
+    return `
+        <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:18px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <!-- 點擊這一區開啟筆記 -->
+            <div style="flex:1; cursor:pointer;" onclick="${filter === 'fav' ? `openNoteEditor('${res.place_id}')` : ''}">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+                    <span onclick="event.stopPropagation(); toggleFavorite('${res.place_id}', ${JSON.stringify(res).replace(/"/g, '&quot;')})" 
+                          style="cursor:pointer; font-size:1.5rem; color:${isFav ? '#FFCC00' : 'rgba(255,255,255,0.2)'};">★</span>
+                    <div style="font-weight:bold; color:#fff; font-size:1.1rem; line-height:1.2;">
+                        ${res.name} ${hasNote ? '📝' : ''}
+                    </div>
+                </div>
+                <div style="font-size:0.8rem; color:#aaa;">${res.address}</div>
+                ${(filter === 'fav' && hasNote) ? `<div style="font-size:0.75rem; color:var(--accent-yellow); margin-top:5px; font-style:italic;">已記錄心得...</div>` : ''}
+            </div>
+            
+            <div style="display:flex; align-items:center; gap:10px;">
+                <a href="${res.map_query}" target="_blank" style="background:var(--primary-orange); color:#fff; padding:8px 12px; border-radius:10px; text-decoration:none; font-size:0.8rem; font-weight:bold;">地圖</a>
+                <button onclick="deleteSingleRecord('${res.place_id}', '${filter}')" style="background:none; border:none; color:#ff6666; font-size:1.2rem; cursor:pointer;">✕</button>
+            </div>
+        </div>`;
+}
     // 5. 獨立刪除邏輯
     function deleteSingleRecord(placeId, filter) {
         const dbName = (filter === 'fav') ? 'TASTE_FAVORITES' : 'TASTE_HISTORY';
@@ -1312,6 +1319,85 @@ function saveSettings() {
     document.getElementById('main-ui').classList.remove('blur-mode');
     keptRestaurants = [];
     isFinalOne = false;
+}
+
+        let currentEditingShopId = null;
+
+// 1. 開啟筆記編輯器
+function openNoteEditor(placeId) {
+    let favs = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
+    const shop = favs.find(i => i.place_id === placeId);
+    if (!shop) return;
+
+    currentEditingShopId = placeId;
+    document.getElementById('note-shop-name').innerText = shop.name;
+    document.getElementById('note-text-area').value = shop.userNote || "";
+    
+    const preview = document.getElementById('note-img-preview');
+    const hint = document.getElementById('note-upload-hint');
+    if (shop.userImage) {
+        preview.src = shop.userImage;
+        preview.style.display = "block";
+        hint.style.display = "none";
+    } else {
+        preview.style.display = "none";
+        hint.style.display = "block";
+    }
+    
+    document.getElementById('note-overlay').style.display = 'flex';
+}
+
+// 2. 處理圖片上傳並壓縮 (關鍵：防止超過 LocalStorage 限制)
+function handleNoteImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            // 建立畫布來壓縮圖片
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 400; // 縮小尺寸
+            let width = img.width;
+            let height = img.height;
+
+            if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // 轉換為低質量的 base64 存入
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+            document.getElementById('note-img-preview').src = compressedBase64;
+            document.getElementById('note-img-preview').style.display = "block";
+            document.getElementById('note-upload-hint').style.display = "none";
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+// 3. 儲存筆記到資料庫
+function saveShopNote() {
+    let favs = JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]');
+    const idx = favs.findIndex(i => i.place_id === currentEditingShopId);
+    
+    if (idx !== -1) {
+        favs[idx].userNote = document.getElementById('note-text-area').value;
+        const previewSrc = document.getElementById('note-img-preview').src;
+        // 如果預覽圖是 Base64 格式才存入
+        favs[idx].userImage = previewSrc.startsWith('data:image') ? previewSrc : null;
+        
+        localStorage.setItem('TASTE_FAVORITES', JSON.stringify(favs));
+        document.getElementById('note-overlay').style.display = 'none';
+        renderHistoryList('fav'); // 刷新清單顯示 📝 圖示
+        alert("心得已收藏！");
+    }
 }
     </script> 
 
