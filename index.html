@@ -803,9 +803,9 @@ async function handleSearchClick() {
         
         // 這是你最關鍵的邏輯：精準導引用戶去修復 API 設定
         if (errorMsg.includes("Places API")) {
-            errorMsg = "❌ 地圖權限未開啟！\n請點擊右上角⚙️進入設定，點擊教學中的「Places API」連結並啟用，並確認已綁定結算帳戶。";
+            errorMsg = "❌ 地圖權限未開啟！\n請點擊左上角☰進入🔑API功能設定，點擊教學中的「Places API」連結並啟用，並確認已綁定結算帳戶。";
         } else if (errorMsg.includes("Generative Language") || errorMsg.includes("Gemini")) {
-            errorMsg = "❌ AI 權限未開啟！\n請點擊右上角⚙️進入設定，點擊教學中的「Gemini API」連結並啟用。";
+            errorMsg = "❌ AI 權限未開啟！\n請點擊左上角☰進入🔑API功能設定，點擊教學中的「Gemini API」連結並啟用。";
         } else if (errorMsg.includes("Candidates")) {
             errorMsg = "❌ AI 無法產生推薦，通常是因為 API Key 尚未生效或結算帳戶 (信用卡) 有問題。";
         } else if (errorMsg.includes("quota")) {
