@@ -1590,64 +1590,59 @@ function closeSwipe(id) {
     </div>
 </div>
 
-    div id="history-overlay">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-shrink:0;">
-        <h2 id="history-title" style="color:var(--primary-orange); margin:0; font-size:1.5rem;">🕒 探索歷史</h2>
-        <button onclick="toggleHistory(false)" style="background:none; border:none; color:#fff; font-size:1.8rem; cursor:pointer;">✕</button>
-    </div>
-    
-    <div id="history-list"></div> <!-- 清單會在這裡滾動 -->
+<!-- 歷史紀錄與最愛清單 (已修正標籤與滾動) -->
+    <div id="history-overlay">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-shrink:0;">
+            <h2 id="history-title" style="color:var(--primary-orange); margin:0; font-size:1.5rem;">🕒 探索歷史</h2>
+            <button onclick="toggleHistory(false)" style="background:none; border:none; color:#fff; font-size:1.8rem; cursor:pointer;">✕</button>
+        </div>
+        
+        <div id="history-list"></div> <!-- 清單會在這裡滾動 -->
 
-    <!-- 修改按鈕容器：固定在底部 -->
-    <div style="padding: 15px 0 10px 0; background: transparent; flex-shrink: 0;">
-        <button id="clear-all-btn" onclick="clearAllHistory()" style="width:100%; padding:16px; background:rgba(255,102,0,0.1); border:1px solid var(--primary-orange); color:var(--primary-orange); border-radius:16px; font-weight:bold; cursor:pointer;">清除所有歷史紀錄</button>
+        <div style="padding: 15px 0 10px 0; background: transparent; flex-shrink: 0;">
+            <button id="clear-all-btn" onclick="clearAllHistory()" style="width:100%; padding:16px; background:rgba(255,102,0,0.1); border:1px solid var(--primary-orange); color:var(--primary-orange); border-radius:16px; font-weight:bold; cursor:pointer;">清除所有歷史紀錄</button>
+        </div>
     </div>
-</div>
+
     <!-- 使用者個人資料設定彈窗 -->
-<div id="profile-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(15px); z-index:11000; align-items:center; justify-content:center; padding:20px;">
-    <div class="api-card" style="text-align:center;">
-        <h2 style="color:#fff; margin-bottom:20px;">👤 編輯個人資料</h2>
-        
-        <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 20px;">
-            <div style="flex: 1;">
-                <label style="display:block; margin-bottom:8px; color:#aaa; font-size: 0.8rem;">頭像 Emoji</label>
-                <input type="text" id="edit-avatar" class="api-input" style="font-size:1.5rem; padding: 10px;" maxlength="2" placeholder="👤">
+    <div id="profile-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(15px); z-index:11000; align-items:center; justify-content:center; padding:20px;">
+        <div class="api-card" style="text-align:center;">
+            <h2 style="color:#fff; margin-bottom:20px;">👤 編輯個人資料</h2>
+            <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 20px;">
+                <div style="flex: 1;">
+                    <label style="display:block; margin-bottom:8px; color:#aaa; font-size: 0.8rem;">頭像 Emoji</label>
+                    <input type="text" id="edit-avatar" class="api-input" style="font-size:1.5rem; padding: 10px;" maxlength="2" placeholder="👤">
+                </div>
+                <div style="flex: 1;">
+                    <label style="display:block; margin-bottom:8px; color:#aaa; font-size: 0.8rem;">背景顏色</label>
+                    <input type="color" id="edit-bg-color" style="width: 100%; height: 45px; border: none; background: transparent; cursor: pointer; padding:0;">
+                </div>
             </div>
-            <div style="flex: 1;">
-                <label style="display:block; margin-bottom:8px; color:#aaa; font-size: 0.8rem;">背景顏色</label>
-                <input type="color" id="edit-bg-color" style="width: 100%; height: 45px; border: none; background: transparent; cursor: pointer; padding:0;">
+            <div style="margin-bottom:25px;">
+                <label style="display:block; margin-bottom:10px; color:#aaa;">你的稱呼</label>
+                <input type="text" id="edit-name" class="api-input" placeholder="輸入名字...">
             </div>
+            <button class="api-save-btn" onclick="saveProfile()">儲存個人設定</button>
+            <button onclick="document.getElementById('profile-overlay').style.display='none'" style="background:none; border:none; color:#555; margin-top:15px; cursor:pointer;">✕ 取消返回</button>
         </div>
-
-        <div style="margin-bottom:25px;">
-            <label style="display:block; margin-bottom:10px; color:#aaa;">你的稱呼</label>
-            <input type="text" id="edit-name" class="api-input" placeholder="輸入名字...">
-        </div>
-
-        <button class="api-save-btn" onclick="saveProfile()">儲存個人設定</button>
-        <button onclick="document.getElementById('profile-overlay').style.display='none'" style="background:none; border:none; color:#555; margin-top:15px; cursor:pointer;">✕ 取消返回</button>
     </div>
-</div>
-    <!-- 7. 美食筆記編輯視窗 -->
-<div id="note-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(20px); z-index:13000; align-items:center; justify-content:center; padding:20px;">
-    <div class="api-card" style="text-align:center; max-width: 400px;">
-        <h2 id="note-shop-name" style="color:var(--primary-orange); margin-bottom:10px; font-size:1.4rem;">店家筆記</h2>
-        
-        <!-- 照片上傳預覽區 -->
-        <div onclick="document.getElementById('note-file-input').click()" style="width:100%; height:180px; background:rgba(255,255,255,0.05); border:2px dashed rgba(255,255,255,0.2); border-radius:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; margin-bottom:15px;">
-            <img id="note-img-preview" style="display:none; width:100%; height:100%; object-fit:cover;">
-            <div id="note-upload-hint" style="color:#666; font-size:0.8rem;">📸 點擊上傳美味回憶</div>
-            <input type="file" id="note-file-input" accept="image/*" style="display:none;" onchange="handleNoteImage(this)">
-        </div>
 
-        <div style="text-align:left; margin-bottom:20px;">
-            <label style="color:#aaa; font-size: 0.85rem; display: block; margin-bottom: 8px;">我的美食心得：</label>
-            <textarea id="note-text-area" class="api-input" style="width:100%; height:120px; text-align:left; font-size:0.9rem; resize:none;" placeholder="這家的牛排超嫩，下次要記得點五分熟..."></textarea>
+    <!-- 美食筆記編輯視窗 -->
+    <div id="note-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(20px); z-index:13000; align-items:center; justify-content:center; padding:20px;">
+        <div class="api-card" style="text-align:center; max-width: 400px;">
+            <h2 id="note-shop-name" style="color:var(--primary-orange); margin-bottom:10px; font-size:1.4rem;">店家筆記</h2>
+            <div onclick="document.getElementById('note-file-input').click()" style="width:100%; height:180px; background:rgba(255,255,255,0.05); border:2px dashed rgba(255,255,255,0.2); border-radius:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; margin-bottom:15px;">
+                <img id="note-img-preview" style="display:none; width:100%; height:100%; object-fit:cover;">
+                <div id="note-upload-hint" style="color:#666; font-size:0.8rem;">📸 點擊上傳美味回憶</div>
+                <input type="file" id="note-file-input" accept="image/*" style="display:none;" onchange="handleNoteImage(this)">
+            </div>
+            <div style="text-align:left; margin-bottom:20px;">
+                <label style="color:#aaa; font-size: 0.85rem; display: block; margin-bottom: 8px;">我的美食心得：</label>
+                <textarea id="note-text-area" class="api-input" style="width:100%; height:120px; text-align:left; font-size:0.9rem; resize:none;" placeholder="這家的牛排超嫩..."></textarea>
+            </div>
+            <button class="api-save-btn" onclick="saveShopNote()">儲存美食心得</button>
+            <button onclick="document.getElementById('note-overlay').style.display='none'" style="background:none; border:none; color:#555; margin-top:15px; cursor:pointer;">關閉不儲存</button>
         </div>
-
-        <button class="api-save-btn" onclick="saveShopNote()">儲存美食心得</button>
-        <button onclick="document.getElementById('note-overlay').style.display='none'" style="background:none; border:none; color:#555; margin-top:15px; cursor:pointer;">關閉不儲存</button>
     </div>
-</div>
 </body>
 </html>
