@@ -325,7 +325,7 @@
         <div class="footer-action">
             <button id="search-btn" class="cta-button" onclick="handleSearchClick()">開始探索美食</button>
         </div>
-        <div id="usage-text" class="usage-hint">今日剩餘次數：-- 次</div>
+        
     </div>
     <div id="swiper-overlay">
         <div class="card-stack" id="card-stack"></div>
@@ -337,7 +337,6 @@
 </div>
     </div>
     <script>
-        const DAILY_LIMIT = 20;
         let userCoords = { lat: null, lng: null };
         let isNearbyMode = false;
         let keptRestaurants = []; 
@@ -462,7 +461,7 @@
             'Kinmen': { '金湖鎮': ['金門機場 (KNH)'] },
             'Lienchiang': { '南竿鄉': ['馬祖南竿機場'], '北竿鄉': ['馬祖北竿機場'] }};
         window.onload = () => {
-            initLocationWatch(); updateDistricts(); updateUsageDisplay();loadProfile();
+            initLocationWatch(); updateDistricts(); loadProfile();
             const key = getStoredKey(); if(key) document.getElementById('api-key-input').value = key;
             const bg = document.getElementById('bg-container');
             images.forEach((url, i) => {
@@ -561,10 +560,9 @@ function toggleApiGuide() {
             }
         }
         function getStoredKey() { return localStorage.getItem('EXPLORER_FINAL_SECURE_KEY') || ""; }
-        function saveApiKey() { const k = document.getElementById('api-key-input').value.trim(); if(k) { localStorage.setItem('EXPLORER_FINAL_SECURE_KEY', k); document.getElementById('api-overlay').style.display='none'; alert("設定成功！請確認已啟用 Places 與 Gemini 權限。"); updateUsageDisplay(); } }
+        function saveApiKey() { const k = document.getElementById('api-key-input').value.trim(); if(k) { localStorage.setItem('EXPLORER_FINAL_SECURE_KEY', k); document.getElementById('api-overlay').style.display='none'; alert("設定成功！請確認已啟用 Places 與 Gemini 權限。");  } }
         function getUsageCount() { const today = new Date().toDateString(); const keyId = btoa(getStoredKey()).slice(-10); const stored = JSON.parse(localStorage.getItem('USAGE_'+keyId) || '{}'); return stored.date === today ? (stored.count || 0) : 0; }
-        function incrementUsage() { const today = new Date().toDateString(); const keyId = btoa(getStoredKey()).slice(-10); const count = getUsageCount() + 1; localStorage.setItem('USAGE_'+keyId, JSON.stringify({date: today, count: count})); updateUsageDisplay(); }
-        function updateUsageDisplay() { const count = getUsageCount(); document.getElementById('usage-text').innerText = `今日剩餘次數：${DAILY_LIMIT - count} 次`; }
+        function incrementUsage() { const today = new Date().toDateString(); const keyId = btoa(getStoredKey()).slice(-10); const count = getUsageCount() + 1; localStorage.setItem('USAGE_'+keyId, JSON.stringify({date: today, count: count})); }
 
 
       // --- 1. 選單與面版控制 ---
@@ -764,7 +762,6 @@ async function handleSearchClick() {
         isOpenOnly: document.getElementById('btn-open').classList.contains('selected')
     };
 
-    if (getUsageCount() >= DAILY_LIMIT) { alert("🚫 今日探索次數已滿。"); return; }
     startSearch(apiKey, config);
 }
      
@@ -1416,7 +1413,6 @@ function renderItemHTML(res, filter) {
     let total = parseInt(localStorage.getItem('TOTAL_SEARCHES') || '0') + 1;
     localStorage.setItem('TOTAL_SEARCHES', total.toString());
     
-    updateUsageDisplay(); 
     loadProfile(); 
     updateApiBillingDisplay(); // <--- 就是加在這一行，讓搜尋完立刻更新帳單儀表板
 }
