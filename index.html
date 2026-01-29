@@ -642,24 +642,27 @@ function toggleFavorite(placeId, resData) {
 let currentFilter = 'all'; // 'all' 或 'fav'
 // 3. 渲染清單 (根據 filter 抓取不同資料庫)
 function renderHistoryList(filter = 'all') {
+    currentFilter = filter; // 確保全域變數同步
     const listContainer = document.getElementById('history-list');
     const clearBtn = document.getElementById('clear-all-btn');
     
-    // 關鍵：根據模式選擇資料庫
+    // 1. 根據模式選擇資料庫
     let data = (filter === 'fav') 
         ? JSON.parse(localStorage.getItem('TASTE_FAVORITES') || '[]') 
         : JSON.parse(localStorage.getItem('TASTE_HISTORY') || '[]');
 
+    // 2. 更新標題與按鈕顯示狀態
     document.getElementById('history-title').innerText = (filter === 'fav') ? '⭐ 我的最愛' : '🕒 探索歷史';
     if (clearBtn) clearBtn.style.display = (filter === 'fav') ? 'none' : 'block';
 
+    // 3. 檢查是否有資料
     if (data.length === 0) {
-        listContainer.innerHTML = `<div style="text-align:center; margin-top:100px; color:#666;">尚未有紀錄</div>`;
+        listContainer.innerHTML = `<div style="text-align:center; margin-top:100px; color:#666; flex-shrink:0;">尚未有紀錄</div>`;
         return;
     }
 
     if (filter === 'fav') {
-        // 最愛模式：執行類別分組
+        // --- 最愛模式：執行類別分組 ---
         const groups = data.reduce((acc, item) => {
             const cat = item.category || "一般探索";
             if (!acc[cat]) acc[cat] = [];
@@ -669,8 +672,9 @@ function renderHistoryList(filter = 'all') {
 
         let html = '';
         for (const cat in groups) {
+            // 加入 flex-shrink: 0 防止群組被壓扁
             html += `
-                <div style="margin-top:15px;">
+                <div style="margin-top:15px; flex-shrink:0; display:block; width:100%;">
                     <div style="color:var(--primary-orange); font-size:0.85rem; font-weight:800; padding:4px 10px; background:rgba(255,102,0,0.15); border-radius:6px; display:inline-block; margin-bottom:10px;">${cat}</div>
                     <div style="display:flex; flex-direction:column; gap:12px;">
                         ${groups[cat].map(res => renderItemHTML(res, filter)).join('')}
@@ -679,9 +683,13 @@ function renderHistoryList(filter = 'all') {
         }
         listContainer.innerHTML = html;
     } else {
-        // 歷史模式：直接排列
+        // --- 歷史模式：直接排列 ---
+        // 確保每個生成的項目 HTML 都有被正確包覆
         listContainer.innerHTML = data.map(res => renderItemHTML(res, filter)).join('');
     }
+    
+    // 4. 重設滾動位置到最上方
+    listContainer.scrollTop = 0;
 }
 
 
@@ -1576,33 +1584,33 @@ function handleListTouchEnd(e, id) {
     const content = document.getElementById(`content-${id}`);
     if (!content) return;
     
+    // 加入蘋果風格的彈性動畫
     content.style.transition = "transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28)";
     
     let diff = listTouchCurrent - listTouchStart;
 
-    // --- 嚴格判定邏輯 ---
-    // 只有當向左滑動超過 50 像素時，才判定為要開啟刪除
+    // 向左滑動超過 50 像素，就停留在露出圓形按鈕的位置 (-85px)
     if (diff < -50) {
         content.style.transform = `translateX(-85px)`;
         activeSwipeId = id;
     } else {
-        // 點擊 (diff 為 0) 或滑動不足，一律彈回原位
+        // 點擊或滑動不足，彈回原位
         content.style.transform = `translateX(0px)`;
         activeSwipeId = null;
     }
     
-    // 清空數值，確保下次判定正確
+    // 重置計算數值
     listTouchStart = 0;
     listTouchCurrent = 0;
 }
 
-// 補上關閉滑動項目的函式，防止切換時卡住
+// 補上關閉滑動項目的函式
 function closeSwipe(id) {
     const content = document.getElementById(`content-${id}`);
     if (content) {
         content.style.transform = `translateX(0px)`;
     }
-}        
+}
     </script> 
 
     <div id="settings-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(15px); z-index:12000; align-items:center; justify-content:center; padding:20px;">
