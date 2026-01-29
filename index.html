@@ -1257,21 +1257,22 @@ function renderItemHTML(res, filter) {
     const hasNote = favs.find(i => i.place_id === res.place_id && (i.userNote || i.userImage));
 
     return `
-        <div class="swipe-item-wrapper" id="wrapper-${res.place_id}" style="background:transparent; overflow:visible;">
-            <!-- iOS 圓形刪除按鈕層 -->
+        <div class="swipe-item-wrapper" id="wrapper-${res.place_id}">
+            <!-- 右側圓形垃圾桶 (保持隱藏，直到滑動) -->
             <div class="swipe-delete-action">
                 <div class="delete-circle" onclick="deleteSingleRecord('${res.place_id}', '${filter}')">
-                    <span>🗑️</span>
+                    <span>Ｘ</span>
                 </div>
             </div>
             
-            <!-- 上層內容 -->
+            <!-- 上層內容層：只監聽觸控事件 -->
             <div class="swipe-item-content" 
                  id="content-${res.place_id}"
                  ontouchstart="handleListTouchStart(event, '${res.place_id}')"
                  ontouchmove="handleListTouchMove(event, '${res.place_id}')"
                  ontouchend="handleListTouchEnd(event, '${res.place_id}')">
                 
+                <!-- 文字資訊 -->
                 <div style="flex:1; padding-right:10px;" onclick="${filter === 'fav' ? `openNoteEditor('${res.place_id}')` : ''}">
                     <div style="font-weight:bold; color:#fff; font-size:1.1rem; line-height:1.2; margin-bottom:4px;">
                         ${res.name} ${hasNote ? '📝' : ''}
@@ -1285,6 +1286,7 @@ function renderItemHTML(res, filter) {
             </div>
         </div>`;
 }
+        
     // 5. 獨立刪除邏輯
     function deleteSingleRecord(placeId, filter) {
     const dbName = (filter === 'fav') ? 'TASTE_FAVORITES' : 'TASTE_HISTORY';
@@ -1528,13 +1530,18 @@ let listTouchCurrent = 0;
 let activeSwipeId = null;
 
 function handleListTouchStart(e, id) {
-    // 如果有其他項開著，先關掉
+    // 1. 如果有其他項開著，先關掉
     if (activeSwipeId && activeSwipeId !== id) {
         closeSwipe(activeSwipeId);
     }
+    
+    // 2. 記錄起始位置
     listTouchStart = e.touches[0].clientX;
+    // 關鍵：將 Current 也初始化為 Start，防止「沒動」卻產生位移
+    listTouchCurrent = listTouchStart; 
+
     const content = document.getElementById(`content-${id}`);
-    content.style.transition = "none";
+    content.style.transition = "none"; // 摸到的時候不要有延遲感
 }
 
 function handleListTouchMove(e, id) {
@@ -1542,9 +1549,11 @@ function handleListTouchMove(e, id) {
     let diff = listTouchCurrent - listTouchStart;
     const content = document.getElementById(`content-${id}`);
 
-    // 只允許向左滑動，且最大滑動距離 80px
-    if (diff < 0 && diff > -120) {
-        content.style.transform = `translateX(${diff}px)`;
+    // 只允許向左滑動 (diff < 0)，且不要滑過頭
+    if (diff < 0) {
+        // 使用阻尼感，滑超過 100px 會變慢
+        let moveX = diff < -120 ? -120 + (diff + 120) * 0.2 : diff;
+        content.style.transform = `translateX(${moveX}px)`;
     }
 }
 
@@ -1552,22 +1561,22 @@ function handleListTouchEnd(e, id) {
     const content = document.getElementById(`content-${id}`);
     if (!content) return;
     
-    // 增加蘋果風格的彈性動畫
     content.style.transition = "transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28)";
     
     let diff = listTouchCurrent - listTouchStart;
 
-    // 向左滑動超過 40 像素，就停留在露出圓形按鈕的位置 (-85px)
-    if (diff < -40) {
+    // --- 嚴格判定邏輯 ---
+    // 只有當向左滑動超過 50 像素時，才判定為要開啟刪除
+    if (diff < -50) {
         content.style.transform = `translateX(-85px)`;
         activeSwipeId = id;
     } else {
-        // 否則彈回原位
+        // 點擊 (diff 為 0) 或滑動不足，一律彈回原位
         content.style.transform = `translateX(0px)`;
         activeSwipeId = null;
     }
     
-    // 重置計算數值
+    // 清空數值，確保下次判定正確
     listTouchStart = 0;
     listTouchCurrent = 0;
 }
