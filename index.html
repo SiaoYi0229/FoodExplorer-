@@ -256,10 +256,11 @@
         </div>
 
         <!-- API 流量儀錶板 -->
+<!-- API 流量儀錶板 -->
 <div id="api-dashboard" style="background: rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 15px; margin: 15px 0; border: 1px solid rgba(255, 255, 255, 0.1);">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <span style="font-size: 0.75rem; color: #888; font-weight: 800; letter-spacing: 1px;">API 流量監控</span>
-        <span id="billing-percent" style="font-size: 0.7rem; color: #2ecc71; background: rgba(46, 204, 113, 0.1); padding: 2px 6px; border-radius: 4px;">安全範圍</span>
+        <span style="font-size: 0.75rem; color: #888; font-weight: 800; letter-spacing: 1px;">API 流量監控 (模擬)</span>
+        <span id="billing-percent" style="font-size: 0.7rem; padding: 2px 6px; border-radius: 4px;">安全範圍</span>
     </div>
     
     <!-- 進度條 -->
@@ -267,7 +268,7 @@
         <div id="api-usage-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #2ecc71, #f1c40f); transition: 0.5s;"></div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
         <div>
             <div style="font-size: 0.65rem; color: #666;">預估本月消耗</div>
             <div id="est-cost" style="font-size: 1rem; font-weight: bold; color: #fff;">$0.00</div>
@@ -277,6 +278,12 @@
             <div id="free-remain" style="font-size: 1rem; font-weight: bold; color: var(--accent-yellow);">$200</div>
         </div>
     </div>
+
+    <!-- 新增：官方帳單連結按鈕 -->
+    <a href="https://console.cloud.google.com/billing" target="_blank" style="display: block; text-align: center; background: rgba(255,255,255,0.05); color: #aaa; padding: 8px; border-radius: 10px; text-decoration: none; font-size: 0.7rem; font-weight: 600; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s;">
+        前往 Google Cloud 官方帳單 ➔
+    </a>
+</div>
 </div>
 
         <div style="margin-top:auto; font-size:0.7rem; color:#444; text-align:center;">TasteExplorer v2.5 Beta</div>
@@ -1340,7 +1347,7 @@ function renderItemHTML(res, filter) {
     const COST_PER_SEARCH = 0.02;
     const MONTHLY_FREE_CREDIT = 200.00;
 
-    // 從本地紀錄獲取本月總搜尋次數 (我們之前已經有 TOTAL_SEARCHES)
+    // 從本地紀錄獲取本月總搜尋次數
     const totalSearches = parseInt(localStorage.getItem('TOTAL_SEARCHES') || '0');
     
     // 計算消耗
@@ -1348,23 +1355,33 @@ function renderItemHTML(res, filter) {
     const remainingCredit = Math.max(0, MONTHLY_FREE_CREDIT - estimatedCost);
     const usePercent = (estimatedCost / MONTHLY_FREE_CREDIT) * 100;
 
-    // 更新 UI
+    // 更新 UI 文字
     document.getElementById('est-cost').innerText = `$${estimatedCost.toFixed(2)}`;
     document.getElementById('free-remain').innerText = `$${remainingCredit.toFixed(2)}`;
     
+    // 更新進度條
     const bar = document.getElementById('api-usage-bar');
     bar.style.width = `${Math.min(100, usePercent)}%`;
 
-    // 根據使用量改變顏色警告
+    // 根據使用量改變顏色與警告標籤
     const percentLabel = document.getElementById('billing-percent');
+    
+    // 預設顏色（安全範圍）
+    bar.style.background = 'linear-gradient(90deg, #2ecc71, #f1c40f)';
+    percentLabel.innerText = "安全範圍";
+    percentLabel.style.color = "#2ecc71";
+    percentLabel.style.background = "rgba(46, 204, 113, 0.1)";
+
     if (usePercent > 80) {
-        bar.style.background = '#e74c3c';
+        bar.style.background = '#e74c3c'; // 紅色
         percentLabel.innerText = "額度將盡";
         percentLabel.style.color = "#e74c3c";
+        percentLabel.style.background = "rgba(231, 76, 60, 0.1)";
     } else if (usePercent > 50) {
-        bar.style.background = '#f1c40f';
+        bar.style.background = '#f1c40f'; // 黃色
         percentLabel.innerText = "用量中等";
         percentLabel.style.color = "#f1c40f";
+        percentLabel.style.background = "rgba(241, 196, 15, 0.1)";
     }
 }
         
