@@ -372,7 +372,8 @@
                 '北投區': ['石牌', '唭哩岸', '奇岩', '北投', '新北投', '復興崗', '忠義', '關渡'],
                 '內湖區': ['西湖', '港墘', '文德', '內湖', '大湖公園', '葫洲', '東湖'],
                 '南港區': ['南港', '南港展覽館', '南港軟體園區', '昆陽'],
-                '文山區': ['動物園', '木柵', '萬芳醫院', '辛亥', '景美', '萬隆']},
+                '文山區': ['動物園', '木柵', '萬芳醫院', '辛亥', '景美', '萬隆']
+            },
             'NewTaipei': {
                 '板橋區': ['板橋', '府中', '新埔', '江子翠', '亞東醫院', '新埔民生', '板新'],
                 '三重區': ['三重', '菜寮', '台北橋', '三重國小', '三和國中', '徐匯中學', '先嗇宮'],
@@ -383,7 +384,18 @@
                 '土城區': ['海山', '土城', '永寧', '頂埔'],
                 '蘆洲區': ['蘆洲', '三民高中', '徐匯中學'],
                 '淡水區': ['淡水', '紅樹林', '竹圍', '竿蓁林', '淡金鄧公', '淡江大學', '淡水行政中心', '漁人碼頭', '淡海新市鎮'],
-                '林口區': ['林口'], '泰山區': ['泰山', '泰山貴和'], '五股區': ['新北產業園區']}};
+                '林口區': ['林口'], '泰山區': ['泰山', '泰山貴和'], '五股區': ['新北產業園區']
+            },
+            'Taoyuan': {
+                '龜山區': ['體育大學', '長庚醫院'], '蘆竹區': ['山鼻', '坑口'], '大園區': ['機場第一航廈', '機場第二航廈', '機場旅館', '大園', '橫山', '領航'], '中壢區': ['高鐵桃園站', '桃園體育園區', '興南', '環北', '老街溪']
+            },
+            'Taichung': {
+                '北屯區': ['北屯總站', '舊社', '松竹', '四維國小'], '西屯區': ['文心崇德', '文心中清', '文華高中', '文心櫻花', '市政府'], '南屯區': ['水安宮', '文心森林公園', '南屯', '豐樂公園'], '南區': ['大慶'], '烏日區': ['九張犁', '九德', '烏日', '高鐵台中站']
+            },
+            'Kaohsiung': {
+                '小港區': ['小港', '高雄國際機場'], '前鎮區': ['草衙', '前鎮高中', '凱旋', '籬仔內', '夢時代'], '苓雅區': ['三多商圈', '五塊厝', '技擊館', '文化中心'], '新興區': ['中央公園', '美麗島', '信義國小'], '三民區': ['高雄車站', '後驛', '高雄高工'], '鼓山區': ['凹子底', '巨蛋', '龍華國小', '內惟藝術中心', '美術館'], '左營區': ['生態園區', '左營', '世運'], '楠梓區': ['後勁', '都會公園'], '鳳山區': ['鳳山西站', '鳳山', '大東', '衛武營']
+            }
+        };
         const trainMap = {
             'Keelung': { '全區': ['基隆', '三坑', '八堵', '七堵', '百福', '暖暖', '海科館', '八斗子'] },
             'Taipei': { '中正區': ['台北車站'], '萬華區': ['萬華'], '松山區': ['松山'], '南港區': ['南港'] },
@@ -479,32 +491,64 @@ function toggleApiGuide() {
             const mrtSel = document.getElementById('mrt-station');
             const label = document.getElementById('trans-label');
             const mainLabel = document.getElementById('transport-main-label');
+            
             const iconMap = { none: '🚆', mrt: '🚇', hsr: '🚄', train: '🚂', airport: '✈️' };
-            const nameMap = { none: '交通偏好', mrt: '交通偏好', hsr: '交通偏好', train: '交通偏好', airport: '交通偏好' };
-            if (mainLabel) mainLabel.innerText = `${iconMap[transport]} ${nameMap[transport]}`;
-            if (transport === 'none' || isNearbyMode) { mrtSec.style.display = 'none'; return; }
+            if (mainLabel) mainLabel.innerText = `${iconMap[transport]} 交通偏好`;
+
+            // 如果不拘 或 處於附近搜尋模式，隱藏站點選單
+            if (transport === 'none' || isNearbyMode) { 
+                mrtSec.style.display = 'none'; 
+                return; 
+            }
+
             mrtSec.style.display = 'block';
+            mrtSel.innerHTML = ''; // 清空舊選項
+
             if (transport === 'mrt') {
-                label.innerText = "🚇 指定捷運站 (依線路分類)";
+                label.innerText = "🚇 指定捷運站";
                 let linesData = (city === 'Taipei' ? mrtLinesTaipei : (city === 'NewTaipei' ? mrtLinesNewTaipei : (city === 'Taoyuan' ? mrtLinesTaoyuan : (city === 'Taichung' ? mrtLinesTaichung : (city === 'Kaohsiung' ? mrtLinesKaohsiung : null)))));
+                
                 if (district === '全區' && linesData) {
+                    // 全區模式：依線路列出所有車站
                     let html = '<option value="">--- 請選擇捷運站 ---</option>';
-                    for (const line in linesData) { html += `<optgroup label="${line}">`; linesData[line].forEach(s => html += `<option value="${s}">${s}站</option>`); html += `</optgroup>`; }
+                    for (const line in linesData) {
+                        html += `<optgroup label="${line}">`;
+                        linesData[line].forEach(s => html += `<option value="${s}">${s}站</option>`);
+                        html += `</optgroup>`;
+                    }
                     mrtSel.innerHTML = html;
                 } else if (mrtMap[city] && mrtMap[city][district]) {
+                    // 特定行政區模式
                     mrtSel.innerHTML = '<option value="">--- 請選擇 ---</option>' + mrtMap[city][district].map(s => `<option value="${s}">${s}站</option>`).join('');
-                } else { mrtSel.innerHTML = '<option value="">該區暫無捷運站</option>'; }
+                } else {
+                    mrtSel.innerHTML = '<option value="">該區暫無捷運站</option>';
+                }
             } else {
+                // 火車、高鐵、機場邏輯
                 const subNameMap = { hsr: '高鐵', train: '火車', airport: '機場' };
                 label.innerText = `${iconMap[transport]} 指定${subNameMap[transport]}站`;
                 let currentMap = (transport === 'train' ? trainMap : (transport === 'hsr' ? hsrMap : airportMap));
+                
                 if (currentMap[city]) {
-                    let list = (district === '全區' ? Object.values(currentMap[city]).flat() : (currentMap[city][district] || []));
+                    let list = [];
+                    if (district === '全區') {
+                        list = Object.values(currentMap[city]).flat();
+                    } else {
+                        list = currentMap[city][district] || [];
+                    }
+                    // 去重並排序
                     list = [...new Set(list)].sort();
-                    mrtSel.innerHTML = '<option value="">--- 請選擇 ---</option>' + list.map(s => `<option value="${s}">${s}${s.includes('機場')?'':'站'}</option>`).join('');
-                } else { mrtSel.innerHTML = '<option value="">該區暫無站點</option>'; }
+                    
+                    if (list.length > 0) {
+                        mrtSel.innerHTML = '<option value="">--- 請選擇 ---</option>' + list.map(s => `<option value="${s}">${s}${s.includes('機場')?'':'站'}</option>`).join('');
+                    } else {
+                        mrtSel.innerHTML = `<option value="">該區暫無${subNameMap[transport]}站點</option>`;
+                    }
+                } else {
+                    mrtSel.innerHTML = '<option value="">該縣市暫無此交通工具</option>';
+                }
             }
-        }  
+        }
         function getStoredKey() { return localStorage.getItem('EXPLORER_FINAL_SECURE_KEY') || ""; }
         function saveApiKey() { const k = document.getElementById('api-key-input').value.trim(); if(k) { localStorage.setItem('EXPLORER_FINAL_SECURE_KEY', k); document.getElementById('api-overlay').style.display='none'; alert("設定成功！請確認已啟用 Places 與 Gemini 權限。"); updateUsageDisplay(); } }
         function getUsageCount() { const today = new Date().toDateString(); const keyId = btoa(getStoredKey()).slice(-10); const stored = JSON.parse(localStorage.getItem('USAGE_'+keyId) || '{}'); return stored.date === today ? (stored.count || 0) : 0; }
@@ -1345,12 +1389,7 @@ function initSwipe(card, wrapper, res) {
     updateApiBillingDisplay(); // <--- 就是加在這一行，讓搜尋完立刻更新帳單儀表板
 }
 
-    function checkTransAvailability() {
-        const transport = document.getElementById('transport').value;
-        const mrtSec = document.getElementById('mrt-section');
-        if (transport === 'none' || isNearbyMode) { mrtSec.style.display = 'none'; return; }
-        mrtSec.style.display = 'block';
-    }
+   
 
     function toggleApiGuide() {
         const box = document.getElementById('api-guide-box');
