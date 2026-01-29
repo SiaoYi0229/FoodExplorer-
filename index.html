@@ -1549,7 +1549,36 @@ function handleListTouchMove(e, id) {
 }
 
 function handleListTouchEnd(e, id) {
-        
+    const content = document.getElementById(`content-${id}`);
+    if (!content) return;
+    
+    // 增加蘋果風格的彈性動畫
+    content.style.transition = "transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28)";
+    
+    let diff = listTouchCurrent - listTouchStart;
+
+    // 向左滑動超過 40 像素，就停留在露出圓形按鈕的位置 (-85px)
+    if (diff < -40) {
+        content.style.transform = `translateX(-85px)`;
+        activeSwipeId = id;
+    } else {
+        // 否則彈回原位
+        content.style.transform = `translateX(0px)`;
+        activeSwipeId = null;
+    }
+    
+    // 重置計算數值
+    listTouchStart = 0;
+    listTouchCurrent = 0;
+}
+
+// 補上關閉滑動項目的函式，防止切換時卡住
+function closeSwipe(id) {
+    const content = document.getElementById(`content-${id}`);
+    if (content) {
+        content.style.transform = `translateX(0px)`;
+    }
+}        
     </script> 
 
     <div id="settings-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(15px); z-index:12000; align-items:center; justify-content:center; padding:20px;">
